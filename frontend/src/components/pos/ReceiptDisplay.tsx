@@ -162,7 +162,7 @@ Thank you for your business!
           <div id="receipt-content" className="px-6 pb-6">
             {/* Header */}
             <div className="text-center border-b pb-4 mb-4">
-              <h2 className="text-xl font-bold">Restaurant POS</h2>
+              <h2 className="text-xl font-bold">Dominos Restaurant</h2>
               <p className="text-sm text-gray-600">Receipt #{order.id.slice(-8).toUpperCase()}</p>
               <p className="text-xs text-gray-500">{formatDate(order.created_at)}</p>
             </div>

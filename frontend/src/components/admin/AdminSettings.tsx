@@ -16,7 +16,7 @@ import {
 
 export function AdminSettings() {
   const [settings, setSettings] = useState({
-    restaurant_name: 'My Restaurant',
+    restaurant_name: 'Dominos Restaurant',
     currency: 'USD',
     tax_rate: '10.00',
     service_charge: '5.00',
@@ -37,7 +37,7 @@ export function AdminSettings() {
   const handleReset = () => {
     // Reset to defaults
     setSettings({
-      restaurant_name: 'My Restaurant',
+      restaurant_name: 'Dominos Restaurant',
       currency: 'USD',
       tax_rate: '10.00',
       service_charge: '5.00',

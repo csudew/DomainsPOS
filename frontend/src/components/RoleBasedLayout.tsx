@@ -133,7 +133,7 @@ export function RoleBasedLayout({ user }: RoleBasedLayoutProps) {
     // Default fallback
     else {
       views.push(
-        { id: 'pos', label: 'POS System', icon: <ShoppingCart className="w-4 h-4" /> }
+        { id: 'pos', label: 'Dominos Restaurant', icon: <ShoppingCart className="w-4 h-4" /> }
       )
     }
 
@@ -170,7 +170,7 @@ export function RoleBasedLayout({ user }: RoleBasedLayoutProps) {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <ShoppingCart className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">POS System</span>
+              <span className="text-xl font-bold">Dominos Restaurant</span>
             </div>
 
             {/* Navigation Tabs */}

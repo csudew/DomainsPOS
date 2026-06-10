@@ -187,7 +187,7 @@ export function AdminLayout({ user }: AdminLayoutProps) {
                   }`}>POS Admin</span>
                   <p className={`text-muted-foreground ${
                     (isMobile || isTablet) ? 'text-sm' : 'text-xs'
-                  }`}>Restaurant Management</p>
+                  }`}>Dominos Restaurant</p>
                 </div>
               )}
             </div>

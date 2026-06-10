@@ -145,7 +145,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
                 </div>
                 <div>
                   <h1 className="font-bold text-foreground">Admin Panel</h1>
-                  <p className="text-xs text-muted-foreground">Restaurant Management</p>
+                  <p className="text-xs text-muted-foreground">Dominos Restaurant</p>
                 </div>
               </div>
             )}
