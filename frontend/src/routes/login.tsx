@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 
 import apiClient from '@/api/client'
 import type { LoginRequest, LoginResponse, APIResponse } from '@/types'
-import { Eye, EyeOff, Store, CreditCard, BarChart3, ChefHat, UserCheck, Settings } from 'lucide-react'
+import { Eye, EyeOff, Store, Users, CreditCard, BarChart3, ChefHat, UserCheck, Settings } from 'lucide-react'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
