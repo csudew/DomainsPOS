@@ -1,8 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
+	"strings"
 
 	"pos-backend/internal/api"
 	"pos-backend/internal/database"
@@ -15,44 +17,47 @@ import (
 )
 
 func main() {
-	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Database configuration
-	dbConfig := database.Config{
-		Host:     getEnv("DB_HOST", "postgres"),
-		Port:     getEnv("DB_PORT", "5432"),
-		User:     getEnv("DB_USER", "postgres"),
-		Password: getEnv("DB_PASSWORD", "postgres123"),
-		DBName:   getEnv("DB_NAME", "pos_system"),
-		SSLMode:  getEnv("DB_SSLMODE", "disable"),
-	}
+	var db *sql.DB
+	var err error
 
-	// Initialize database connection
-	db, err := database.Connect(dbConfig)
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		db, err = database.ConnectFromURL(dbURL)
+	} else {
+		db, err = database.Connect(database.Config{
+			Host:     getEnv("DB_HOST", "postgres"),
+			Port:     getEnv("DB_PORT", "5432"),
+			User:     getEnv("DB_USER", "postgres"),
+			Password: getEnv("DB_PASSWORD", "postgres123"),
+			DBName:   getEnv("DB_NAME", "pos_system"),
+			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		})
+	}
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
-	// Test database connection
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-	}
-
 	log.Println("Successfully connected to database")
 
-	// Initialize Gin router
+	if err := database.RunMigrations(db); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
 	gin.SetMode(getEnv("GIN_MODE", "release"))
 	router := gin.New()
 
-	// Add middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+
+	defaultOrigins := "http://localhost:3000,http://localhost:5173"
+	allowedOrigins := strings.Split(getEnv("ALLOWED_ORIGINS", defaultOrigins), ",")
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:5173"},
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"},
 		AllowCredentials: true,

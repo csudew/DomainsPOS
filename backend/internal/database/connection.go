@@ -18,23 +18,30 @@ type Config struct {
 	SSLMode  string
 }
 
+// ConnectFromURL connects using a full Postgres URL (e.g. from Fly.io DATABASE_URL).
+func ConnectFromURL(url string) (*sql.DB, error) {
+	return open(url)
+}
+
 func Connect(config Config) (*sql.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.Host, config.Port, config.User, config.Password, config.DBName, config.SSLMode,
 	)
 
+	return open(dsn)
+}
+
+func open(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
-	// Configure connection pool
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(10)
 	db.SetConnMaxLifetime(5 * time.Minute)
 
-	// Test the connection
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
