@@ -11,43 +11,50 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, role) 
 ('kitchen1', 'kitchen@pos.com',  '$2a$10$FPH.ONfAgquWmXjM3LE61OIgOPgXX8i.jOISCHZ2DpK2gg4krEWfO', 'Chef',   'Williams', 'kitchen')
 ON CONFLICT (username) DO NOTHING;
 
--- Categories
-INSERT INTO categories (name, description, color, sort_order) VALUES
-('Appetizers',   'Starter dishes and small plates',       '#FF6B6B', 1),
-('Main Courses', 'Primary dishes and entrees',            '#4ECDC4', 2),
-('Beverages',    'Drinks, sodas, and refreshments',       '#45B7D1', 3),
-('Desserts',     'Sweet treats and desserts',             '#96CEB4', 4),
-('Salads',       'Fresh salads and healthy options',      '#FECA57', 5),
-('Pizza',        'Various pizza options',                 '#FF9FF3', 6)
-ON CONFLICT DO NOTHING;
+-- Categories: remove duplicates caused by prior failed runs, then insert missing ones
+DELETE FROM categories
+WHERE id NOT IN (
+    SELECT DISTINCT ON (name) id FROM categories ORDER BY name, created_at
+);
 
--- Products
+INSERT INTO categories (name, description, color, sort_order)
+SELECT v.name, v.description, v.color, v.sort_order FROM (VALUES
+    ('Appetizers',   'Starter dishes and small plates',    '#FF6B6B', 1),
+    ('Main Courses', 'Primary dishes and entrees',         '#4ECDC4', 2),
+    ('Beverages',    'Drinks, sodas, and refreshments',    '#45B7D1', 3),
+    ('Desserts',     'Sweet treats and desserts',          '#96CEB4', 4),
+    ('Salads',       'Fresh salads and healthy options',   '#FECA57', 5),
+    ('Pizza',        'Various pizza options',              '#FF9FF3', 6)
+) AS v(name, description, color, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE categories.name = v.name);
+
+-- Products (LIMIT 1 on subqueries guards against any remaining duplicates)
 INSERT INTO products (category_id, name, description, price, sku, preparation_time, sort_order) VALUES
-((SELECT id FROM categories WHERE name = 'Appetizers'), 'Buffalo Wings',    'Crispy chicken wings with buffalo sauce',          12.99, 'APP001', 15, 1),
-((SELECT id FROM categories WHERE name = 'Appetizers'), 'Mozzarella Sticks','Breaded mozzarella with marinara sauce',            8.99, 'APP002', 10, 2),
-((SELECT id FROM categories WHERE name = 'Appetizers'), 'Nachos Supreme',   'Tortilla chips with cheese, jalapeños, and toppings',11.49,'APP003', 12, 3),
-((SELECT id FROM categories WHERE name = 'Appetizers'), 'Onion Rings',      'Crispy beer-battered onion rings',                  7.99, 'APP004',  8, 4),
-((SELECT id FROM categories WHERE name = 'Main Courses'),'Grilled Chicken Breast','Seasoned grilled chicken with vegetables',   18.99,'MAIN001', 20, 1),
-((SELECT id FROM categories WHERE name = 'Main Courses'),'Beef Steak',      'Premium cut beef steak cooked to order',           26.99,'MAIN002', 25, 2),
-((SELECT id FROM categories WHERE name = 'Main Courses'),'Fish & Chips',    'Beer battered fish with crispy fries',             16.99,'MAIN003', 18, 3),
-((SELECT id FROM categories WHERE name = 'Main Courses'),'Pasta Carbonara', 'Creamy pasta with bacon and parmesan',             15.99,'MAIN004', 15, 4),
-((SELECT id FROM categories WHERE name = 'Main Courses'),'BBQ Ribs',        'Slow-cooked ribs with BBQ sauce',                  22.99,'MAIN005', 30, 5),
-((SELECT id FROM categories WHERE name = 'Beverages'),  'Coca Cola',        'Classic cola soft drink',                           2.99, 'BEV001',  0, 1),
-((SELECT id FROM categories WHERE name = 'Beverages'),  'Fresh Orange Juice','Freshly squeezed orange juice',                    4.99, 'BEV002',  2, 2),
-((SELECT id FROM categories WHERE name = 'Beverages'),  'Coffee',           'Freshly brewed coffee',                             3.49, 'BEV003',  3, 3),
-((SELECT id FROM categories WHERE name = 'Beverages'),  'Iced Tea',         'Refreshing iced tea',                               2.99, 'BEV004',  1, 4),
-((SELECT id FROM categories WHERE name = 'Beverages'),  'Milkshake - Vanilla','Creamy vanilla milkshake',                        5.99, 'BEV005',  4, 5),
-((SELECT id FROM categories WHERE name = 'Desserts'),   'Chocolate Cake',   'Rich chocolate cake with frosting',                 6.99, 'DES001',  5, 1),
-((SELECT id FROM categories WHERE name = 'Desserts'),   'Apple Pie',        'Classic apple pie with cinnamon',                   5.99, 'DES002',  8, 2),
-((SELECT id FROM categories WHERE name = 'Desserts'),   'Ice Cream Sundae', 'Vanilla ice cream with toppings',                   4.99, 'DES003',  3, 3),
-((SELECT id FROM categories WHERE name = 'Desserts'),   'Cheesecake',       'New York style cheesecake',                         7.99, 'DES004',  5, 4),
-((SELECT id FROM categories WHERE name = 'Salads'),     'Caesar Salad',     'Romaine lettuce with caesar dressing',               9.99, 'SAL001',  8, 1),
-((SELECT id FROM categories WHERE name = 'Salads'),     'Greek Salad',      'Fresh vegetables with feta cheese',                11.99, 'SAL002', 10, 2),
-((SELECT id FROM categories WHERE name = 'Salads'),     'Garden Salad',     'Mixed greens with vegetables',                      8.99, 'SAL003',  6, 3),
-((SELECT id FROM categories WHERE name = 'Pizza'),      'Margherita Pizza', 'Classic pizza with tomato, mozzarella, basil',     14.99, 'PIZ001', 16, 1),
-((SELECT id FROM categories WHERE name = 'Pizza'),      'Pepperoni Pizza',  'Pizza with pepperoni and cheese',                  16.99, 'PIZ002', 16, 2),
-((SELECT id FROM categories WHERE name = 'Pizza'),      'Supreme Pizza',    'Pizza loaded with multiple toppings',              19.99, 'PIZ003', 20, 3),
-((SELECT id FROM categories WHERE name = 'Pizza'),      'Hawaiian Pizza',   'Pizza with ham and pineapple',                     17.99, 'PIZ004', 16, 4)
+((SELECT id FROM categories WHERE name = 'Appetizers'   LIMIT 1), 'Buffalo Wings',       'Crispy chicken wings with buffalo sauce',             12.99, 'APP001', 15, 1),
+((SELECT id FROM categories WHERE name = 'Appetizers'   LIMIT 1), 'Mozzarella Sticks',   'Breaded mozzarella with marinara sauce',               8.99, 'APP002', 10, 2),
+((SELECT id FROM categories WHERE name = 'Appetizers'   LIMIT 1), 'Nachos Supreme',      'Tortilla chips with cheese, jalapeños, and toppings', 11.49, 'APP003', 12, 3),
+((SELECT id FROM categories WHERE name = 'Appetizers'   LIMIT 1), 'Onion Rings',         'Crispy beer-battered onion rings',                     7.99, 'APP004',  8, 4),
+((SELECT id FROM categories WHERE name = 'Main Courses' LIMIT 1), 'Grilled Chicken Breast','Seasoned grilled chicken with vegetables',           18.99, 'MAIN001', 20, 1),
+((SELECT id FROM categories WHERE name = 'Main Courses' LIMIT 1), 'Beef Steak',          'Premium cut beef steak cooked to order',              26.99, 'MAIN002', 25, 2),
+((SELECT id FROM categories WHERE name = 'Main Courses' LIMIT 1), 'Fish & Chips',        'Beer battered fish with crispy fries',                16.99, 'MAIN003', 18, 3),
+((SELECT id FROM categories WHERE name = 'Main Courses' LIMIT 1), 'Pasta Carbonara',     'Creamy pasta with bacon and parmesan',                15.99, 'MAIN004', 15, 4),
+((SELECT id FROM categories WHERE name = 'Main Courses' LIMIT 1), 'BBQ Ribs',            'Slow-cooked ribs with BBQ sauce',                    22.99, 'MAIN005', 30, 5),
+((SELECT id FROM categories WHERE name = 'Beverages'    LIMIT 1), 'Coca Cola',           'Classic cola soft drink',                             2.99, 'BEV001',  0, 1),
+((SELECT id FROM categories WHERE name = 'Beverages'    LIMIT 1), 'Fresh Orange Juice',  'Freshly squeezed orange juice',                       4.99, 'BEV002',  2, 2),
+((SELECT id FROM categories WHERE name = 'Beverages'    LIMIT 1), 'Coffee',              'Freshly brewed coffee',                                3.49, 'BEV003',  3, 3),
+((SELECT id FROM categories WHERE name = 'Beverages'    LIMIT 1), 'Iced Tea',            'Refreshing iced tea',                                  2.99, 'BEV004',  1, 4),
+((SELECT id FROM categories WHERE name = 'Beverages'    LIMIT 1), 'Milkshake - Vanilla', 'Creamy vanilla milkshake',                             5.99, 'BEV005',  4, 5),
+((SELECT id FROM categories WHERE name = 'Desserts'     LIMIT 1), 'Chocolate Cake',      'Rich chocolate cake with frosting',                    6.99, 'DES001',  5, 1),
+((SELECT id FROM categories WHERE name = 'Desserts'     LIMIT 1), 'Apple Pie',           'Classic apple pie with cinnamon',                      5.99, 'DES002',  8, 2),
+((SELECT id FROM categories WHERE name = 'Desserts'     LIMIT 1), 'Ice Cream Sundae',    'Vanilla ice cream with toppings',                      4.99, 'DES003',  3, 3),
+((SELECT id FROM categories WHERE name = 'Desserts'     LIMIT 1), 'Cheesecake',          'New York style cheesecake',                            7.99, 'DES004',  5, 4),
+((SELECT id FROM categories WHERE name = 'Salads'       LIMIT 1), 'Caesar Salad',        'Romaine lettuce with caesar dressing',                  9.99, 'SAL001',  8, 1),
+((SELECT id FROM categories WHERE name = 'Salads'       LIMIT 1), 'Greek Salad',         'Fresh vegetables with feta cheese',                   11.99, 'SAL002', 10, 2),
+((SELECT id FROM categories WHERE name = 'Salads'       LIMIT 1), 'Garden Salad',        'Mixed greens with vegetables',                         8.99, 'SAL003',  6, 3),
+((SELECT id FROM categories WHERE name = 'Pizza'        LIMIT 1), 'Margherita Pizza',    'Classic pizza with tomato, mozzarella, basil',        14.99, 'PIZ001', 16, 1),
+((SELECT id FROM categories WHERE name = 'Pizza'        LIMIT 1), 'Pepperoni Pizza',     'Pizza with pepperoni and cheese',                     16.99, 'PIZ002', 16, 2),
+((SELECT id FROM categories WHERE name = 'Pizza'        LIMIT 1), 'Supreme Pizza',       'Pizza loaded with multiple toppings',                 19.99, 'PIZ003', 20, 3),
+((SELECT id FROM categories WHERE name = 'Pizza'        LIMIT 1), 'Hawaiian Pizza',      'Pizza with ham and pineapple',                        17.99, 'PIZ004', 16, 4)
 ON CONFLICT (sku) DO NOTHING;
 
 -- Dining tables
