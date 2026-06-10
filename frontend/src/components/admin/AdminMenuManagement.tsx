@@ -120,7 +120,7 @@ export function AdminMenuManagement() {
     mutationFn: (id: string) => apiClient.deleteProduct(id),
     onSuccess: (_, productId) => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
-      toastHelpers.productDeleted(productId)
+      toastHelpers.success('Product deleted', 'The product has been deleted successfully.')
     },
     onError: (error: any) => {
       toastHelpers.apiError('Delete product', error)
@@ -132,7 +132,7 @@ export function AdminMenuManagement() {
     mutationFn: (id: string) => apiClient.deleteCategory(id),
     onSuccess: (_, categoryId) => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
-      toastHelpers.categoryDeleted(categoryId)
+      toastHelpers.success('Category deleted', 'The category has been deleted successfully.')
     },
     onError: (error: any) => {
       toastHelpers.apiError('Delete category', error)

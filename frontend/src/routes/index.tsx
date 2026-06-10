@@ -14,7 +14,7 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
 
   // ALL HOOKS MUST BE AT THE TOP LEVEL - before any conditional returns
-  const { isLoading: isServerVerifying, error } = useQuery({
+  const currentUserQuery = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => {
       console.log('Verifying user with API URL:', import.meta.env.VITE_API_URL)
@@ -22,13 +22,16 @@ function HomePage() {
     },
     retry: 1,
     enabled: false, // Temporarily disable server verification
-    onError: (error) => {
-      console.error('getCurrentUser failed:', error)
+  })
+
+  useEffect(() => {
+    if (currentUserQuery.error) {
+      console.error('getCurrentUser failed:', currentUserQuery.error)
       // Clear auth and redirect to login
       apiClient.clearAuth()
       window.location.href = '/login'
     }
-  })
+  }, [currentUserQuery.error])
 
   useEffect(() => {
     console.log('Loading user from localStorage...')

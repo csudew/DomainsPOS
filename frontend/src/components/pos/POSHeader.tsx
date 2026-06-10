@@ -2,16 +2,17 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Store, 
-  User as UserIcon, 
-  LogOut, 
+import {
+  Store,
+  User as UserIcon,
+  LogOut,
   Settings,
   UtensilsCrossed,
   ShoppingBag,
   Truck,
   MapPin,
-  ChefHat
+  ChefHat,
+  History
 } from 'lucide-react'
 import apiClient from '@/api/client'
 import type { User, DiningTable } from '@/types'

@@ -135,7 +135,7 @@ export function QuickAccessPanel({
                         <span className="text-xs text-gray-500">
                           {formatCurrency(product.price)}
                         </span>
-                        {product.available && (
+                        {product.is_available && (
                           <Badge variant="outline" className="text-xs py-0">
                             Available
                           </Badge>

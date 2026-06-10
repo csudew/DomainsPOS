@@ -230,7 +230,6 @@ export function POSLayout({ user }: POSLayoutProps) {
       {/* Table Selection Modal */}
       {showTableModal && (
         <TableSelectionModal
-          isOpen={showTableModal}
           onClose={() => setShowTableModal(false)}
           tables={tables}
           selectedTable={selectedTable}

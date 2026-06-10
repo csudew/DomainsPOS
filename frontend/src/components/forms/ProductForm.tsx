@@ -52,7 +52,7 @@ export function ProductForm({ product, onSuccess, onCancel, mode = 'create' }: P
         price: product.price,
         category_id: product.category_id,
         image_url: product.image_url || '',
-        status: product.status as any,
+        status: (product.is_available ? 'active' : 'inactive') as any,
         preparation_time: product.preparation_time || 5,
       }
     : {
@@ -67,17 +67,17 @@ export function ProductForm({ product, onSuccess, onCancel, mode = 'create' }: P
 
   const form = useForm<CreateProductData | UpdateProductData>({
     resolver: zodResolver(schema),
-    defaultValues,
+    defaultValues: defaultValues as any,
   })
 
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CreateProductData) => apiClient.createProduct(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      toastHelpers.productCreated(form.getValues('name'))
+      toastHelpers.productCreated(form.getValues('name') ?? '')
       form.reset()
       onSuccess?.()
     },
@@ -89,11 +89,11 @@ export function ProductForm({ product, onSuccess, onCancel, mode = 'create' }: P
   // Update mutation  
   const updateMutation = useMutation({
     mutationFn: (data: UpdateProductData) => apiClient.updateProduct(data.id.toString(), data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      toastHelpers.apiSuccess('Update', `Product "${form.getValues('name')}"`)
+      toastHelpers.apiSuccess('Update', `Product "${form.getValues('name') ?? ''}"`)
       onSuccess?.()
     },
     onError: (error) => {

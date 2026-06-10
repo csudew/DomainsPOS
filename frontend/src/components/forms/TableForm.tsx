@@ -35,8 +35,7 @@ export function TableForm({ table, onSuccess, onCancel, mode = 'create' }: Table
     ? {
         id: table.id,
         table_number: table.table_number,
-        seats: table.seats,
-        status: table.status as any,
+        seats: table.seating_capacity,
         location: table.location || '',
       }
     : {
@@ -54,11 +53,11 @@ export function TableForm({ table, onSuccess, onCancel, mode = 'create' }: Table
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CreateTableData) => apiClient.createTable(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tables'] })
       queryClient.invalidateQueries({ queryKey: ['tables'] })
       queryClient.invalidateQueries({ queryKey: ['tables-summary'] })
-      toastHelpers.tableCreated(form.getValues('table_number'))
+      toastHelpers.tableCreated(form.getValues('table_number') ?? '')
       form.reset()
       onSuccess?.()
     },
@@ -70,11 +69,11 @@ export function TableForm({ table, onSuccess, onCancel, mode = 'create' }: Table
   // Update mutation  
   const updateMutation = useMutation({
     mutationFn: (data: UpdateTableData) => apiClient.updateTable(data.id.toString(), data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tables'] })
       queryClient.invalidateQueries({ queryKey: ['tables'] })
       queryClient.invalidateQueries({ queryKey: ['tables-summary'] })
-      toastHelpers.apiSuccess('Update', `Table ${form.getValues('table_number')}`)
+      toastHelpers.apiSuccess('Update', `Table ${form.getValues('table_number') ?? ''}`)
       onSuccess?.()
     },
     onError: (error) => {

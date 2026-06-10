@@ -184,7 +184,7 @@ export function ProductSearch({
                               {product.name}
                             </h3>
                             <Badge variant="secondary" className="text-xs">
-                              {getCategoryName(product.category_id)}
+                              {getCategoryName(product.category_id ?? '')}
                             </Badge>
                             <Badge className={`text-xs ${stock.color}`}>
                               {stock.count} left
@@ -200,7 +200,7 @@ export function ProductSearch({
                               <DollarSign className="h-3 w-3" />
                               {formatCurrency(product.price)}
                             </span>
-                            {product.available && (
+                            {product.is_available && (
                               <Badge variant="outline" className="text-xs">
                                 <Package className="h-3 w-3 mr-1" />
                                 Available

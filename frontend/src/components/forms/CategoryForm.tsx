@@ -34,7 +34,7 @@ export function CategoryForm({ category, onSuccess, onCancel, mode = 'create' }:
         id: category.id,
         name: category.name,
         description: category.description || '',
-        image_url: category.image_url || '',
+        image_url: '',
         sort_order: category.sort_order || 0,
       }
     : {
@@ -52,11 +52,11 @@ export function CategoryForm({ category, onSuccess, onCancel, mode = 'create' }:
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CreateCategoryData) => apiClient.createCategory(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
-      toastHelpers.categoryCreated(form.getValues('name'))
+      toastHelpers.categoryCreated(form.getValues('name') ?? '')
       form.reset()
       onSuccess?.()
     },
@@ -68,11 +68,11 @@ export function CategoryForm({ category, onSuccess, onCancel, mode = 'create' }:
   // Update mutation  
   const updateMutation = useMutation({
     mutationFn: (data: UpdateCategoryData) => apiClient.updateCategory(data.id.toString(), data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
-      toastHelpers.apiSuccess('Update', `Category "${form.getValues('name')}"`)
+      toastHelpers.apiSuccess('Update', `Category "${form.getValues('name') ?? ''}"`)
       onSuccess?.()
     },
     onError: (error) => {

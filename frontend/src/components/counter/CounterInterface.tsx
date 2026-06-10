@@ -92,7 +92,7 @@ export function CounterInterface() {
   // Fetch pending orders for payment processing
   const { data: pendingOrders = [] } = useQuery({
     queryKey: ['pendingOrders'],
-    queryFn: () => apiClient.getOrders({ status: ['ready', 'served'] }).then(res => res.data)
+    queryFn: () => apiClient.getOrders({ status: 'ready' }).then(res => res.data)
   })
 
   // Create order mutation (counter endpoint - all order types)

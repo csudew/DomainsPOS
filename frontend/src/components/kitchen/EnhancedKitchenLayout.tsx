@@ -51,30 +51,34 @@ export function EnhancedKitchenLayout({ user }: EnhancedKitchenLayoutProps) {
     queryFn: () => apiClient.getKitchenOrders('all'),
     refetchInterval: autoRefresh ? 3000 : false, // 3-second refresh for balance
     select: (data) => data.data || [],
-    onSuccess: (data) => {
-      setLastRefresh(new Date());
-      
-      // Check for new orders and play sound
-      const currentOrders = data || [];
-      const currentOrderIds = new Set(currentOrders.map((order: Order) => order.id));
-      const newOrderIds = currentOrders
-        .filter((order: Order) => !previousOrderIds.has(order.id) && order.status === 'confirmed')
-        .map((order: Order) => order.id);
-      
-      // Play sound for new orders
-      newOrderIds.forEach(async (orderId) => {
-        try {
-          await kitchenSoundService.playNewOrderSound(orderId);
-        } catch (error) {
-          console.error('Failed to play new order sound:', error);
-        }
-      });
-      
-      setPreviousOrderIds(currentOrderIds);
-    },
   });
 
   const orders = ordersResponse || [];
+
+  // React to new order data: update last refresh time and play sounds for new orders
+  useEffect(() => {
+    if (!ordersResponse) return;
+
+    setLastRefresh(new Date());
+
+    const currentOrders = ordersResponse as Order[];
+    const currentOrderIds = new Set(currentOrders.map((order: Order) => order.id));
+    const newOrderIds = currentOrders
+      .filter((order: Order) => !previousOrderIds.has(order.id) && order.status === 'confirmed')
+      .map((order: Order) => order.id);
+
+    // Play sound for new orders
+    newOrderIds.forEach(async (orderId) => {
+      try {
+        await kitchenSoundService.playNewOrderSound(orderId);
+      } catch (error) {
+        console.error('Failed to play new order sound:', error);
+      }
+    });
+
+    setPreviousOrderIds(currentOrderIds);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordersResponse]);
 
   // Group orders by status for better organization
   const ordersByStatus = {
@@ -100,7 +104,7 @@ export function EnhancedKitchenLayout({ user }: EnhancedKitchenLayoutProps) {
   // Handle order status updates
   const handleOrderStatusUpdate = useCallback(async (orderId: string, newStatus: string) => {
     try {
-      await apiClient.updateOrderStatus(orderId, newStatus);
+      await apiClient.updateOrderStatus(orderId, newStatus as Parameters<typeof apiClient.updateOrderStatus>[1]);
       refetch();
     } catch (error) {
       console.error('Failed to update order status:', error);

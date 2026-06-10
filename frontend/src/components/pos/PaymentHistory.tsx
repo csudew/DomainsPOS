@@ -43,10 +43,9 @@ export function PaymentHistory({ isOpen, onClose }: PaymentHistoryProps) {
     queryKey: ['payments', 'history'],
     queryFn: async () => {
       // Note: This is a simplified approach. In practice, you'd have a dedicated endpoint for payment history
-      const ordersResponse = await apiClient.getOrders({ 
+      const ordersResponse = await apiClient.getOrders({
         status: undefined,
-        limit: 100,
-        offset: 0 
+        per_page: 100,
       })
       
       if (!ordersResponse.success) {
@@ -322,14 +321,14 @@ export function PaymentHistory({ isOpen, onClose }: PaymentHistoryProps) {
           }}
           order={selectedPayment.order}
           payment={selectedPayment}
-          items={selectedPayment.order.order_items?.map(item => ({
+          items={(selectedPayment.order.items?.map(item => ({
             product: {
               id: item.product_id,
-              name: item.product_name || 'Unknown Product',
+              name: item.product?.name || 'Unknown Product',
               price: item.unit_price
             },
             quantity: item.quantity
-          })) || []}
+          })) || []) as any}
           subtotal={selectedPayment.amount / 1.1} // Rough estimate, adjust based on your tax calculation
           taxAmount={selectedPayment.amount - (selectedPayment.amount / 1.1)}
           totalAmount={selectedPayment.amount}

@@ -25,6 +25,8 @@ import type {
   TableFilters,
 } from '@/types';
 
+type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled';
+
 class APIClient {
   private client: AxiosInstance;
 
