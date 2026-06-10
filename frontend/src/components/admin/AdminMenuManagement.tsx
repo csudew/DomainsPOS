@@ -95,7 +95,7 @@ export function AdminMenuManagement() {
       page: productsPagination.page,
       per_page: productsPagination.pageSize,
       search: debouncedSearch || undefined
-    }).then((res: any) => res.data)
+    })
   })
 
   // Fetch categories with pagination
@@ -105,15 +105,16 @@ export function AdminMenuManagement() {
       page: categoriesPagination.page,
       per_page: categoriesPagination.pageSize,
       search: debouncedCategorySearch || undefined
-    }).then((res: any) => res.data)
+    })
   })
 
   // Extract data and pagination info
-  const products = Array.isArray(productsData) ? productsData : (productsData as any)?.data || []
-  const productsPaginationInfo = (productsData as any)?.pagination || { total: 0 }
+  // getAdminProducts/getAdminCategories return { success, message, data: [...], meta: { total, ... } }
+  const products = Array.isArray((productsData as any)?.data) ? (productsData as any).data : []
+  const productsPaginationInfo = (productsData as any)?.meta || { total: 0 }
 
-  const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData as any)?.data || []
-  const categoriesPaginationInfo = (categoriesData as any)?.pagination || { total: 0 }
+  const categories = Array.isArray((categoriesData as any)?.data) ? (categoriesData as any).data : []
+  const categoriesPaginationInfo = (categoriesData as any)?.meta || { total: 0 }
 
   // Delete product mutation
   const deleteProductMutation = useMutation({

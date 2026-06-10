@@ -180,9 +180,10 @@ class APIClient {
   }
 
   async createOrder(order: CreateOrderRequest): Promise<APIResponse<Order>> {
+    // There is no generic POST /orders route; use /counter/orders which accepts all order types
     return this.request({
       method: 'POST',
-      url: '/orders',
+      url: '/counter/orders',
       data: order,
     });
   }
@@ -308,6 +309,15 @@ class APIClient {
     });
   }
 
+  // Admin users endpoint with pagination and filtering
+  async getAdminUsers(params?: { page?: number, per_page?: number, search?: string, role?: string, active?: boolean }): Promise<APIResponse<User[]>> {
+    return this.request({
+      method: 'GET',
+      url: '/admin/users',
+      params,
+    });
+  }
+
   async createUser(userData: any): Promise<APIResponse<User>> {
     return this.request({
       method: 'POST',
@@ -318,7 +328,7 @@ class APIClient {
 
   async updateUser(id: string, userData: any): Promise<APIResponse<User>> {
     return this.request({
-      method: 'PATCH',
+      method: 'PUT',
       url: `/admin/users/${id}`,
       data: userData,
     });
@@ -333,24 +343,40 @@ class APIClient {
 
   // Admin-specific product management
   async createProduct(productData: any): Promise<APIResponse<Product>> {
-    return this.request({ method: 'POST', url: '/admin/products', data: productData });
+    // Map frontend field names to backend field names
+    const { status, category_id, ...rest } = productData;
+    const payload: any = { ...rest };
+    if (status !== undefined) payload.is_available = status === 'active';
+    // category_id must be a string UUID; ensure it's not coerced to a number
+    if (category_id !== undefined) payload.category_id = String(category_id);
+    return this.request({ method: 'POST', url: '/admin/products', data: payload });
   }
 
   async updateProduct(id: string, productData: any): Promise<APIResponse<Product>> {
-    return this.request({ method: 'PUT', url: `/admin/products/${id}`, data: productData });
+    // Map frontend field names to backend field names
+    const { status, category_id, ...rest } = productData;
+    const payload: any = { ...rest };
+    if (status !== undefined) payload.is_available = status === 'active';
+    // category_id must be a string UUID; ensure it's not coerced to a number
+    if (category_id !== undefined) payload.category_id = String(category_id);
+    return this.request({ method: 'PUT', url: `/admin/products/${id}`, data: payload });
   }
 
   async deleteProduct(id: string): Promise<APIResponse> {
     return this.request({ method: 'DELETE', url: `/admin/products/${id}` });
   }
 
-  // Admin-specific category management  
+  // Admin-specific category management
   async createCategory(categoryData: any): Promise<APIResponse<Category>> {
-    return this.request({ method: 'POST', url: '/admin/categories', data: categoryData });
+    // Backend only accepts: name, description, color, sort_order (no image_url)
+    const { image_url, ...payload } = categoryData;
+    return this.request({ method: 'POST', url: '/admin/categories', data: payload });
   }
 
   async updateCategory(id: string, categoryData: any): Promise<APIResponse<Category>> {
-    return this.request({ method: 'PUT', url: `/admin/categories/${id}`, data: categoryData });
+    // Backend only accepts: name, description, color, sort_order, is_active (no image_url)
+    const { image_url, ...payload } = categoryData;
+    return this.request({ method: 'PUT', url: `/admin/categories/${id}`, data: payload });
   }
 
   async deleteCategory(id: string): Promise<APIResponse> {
@@ -392,21 +418,38 @@ class APIClient {
   }
 
   // Admin tables endpoint with pagination
-  async getAdminTables(params?: { page?: number, limit?: number, search?: string, status?: string }): Promise<APIResponse<DiningTable[]>> {
-    return this.request({ 
-      method: 'GET', 
+  async getAdminTables(params?: { page?: number, per_page?: number, limit?: number, search?: string, status?: string }): Promise<APIResponse<DiningTable[]>> {
+    // Normalize params (handle both per_page and limit)
+    const normalizedParams = {
+      page: params?.page,
+      per_page: params?.per_page || params?.limit,
+      search: params?.search,
+      status: params?.status,
+    };
+    return this.request({
+      method: 'GET',
       url: '/admin/tables',
-      params 
+      params: normalizedParams
     });
   }
 
   // Admin-specific table management
   async createTable(tableData: any): Promise<APIResponse<DiningTable>> {
-    return this.request({ method: 'POST', url: '/admin/tables', data: tableData });
+    // Map frontend field names to backend field names
+    const { seats, status, ...rest } = tableData;
+    const payload: any = { ...rest };
+    if (seats !== undefined) payload.seating_capacity = seats;
+    // Backend does not accept a status string; is_occupied is managed by orders
+    return this.request({ method: 'POST', url: '/admin/tables', data: payload });
   }
 
   async updateTable(id: string, tableData: any): Promise<APIResponse<DiningTable>> {
-    return this.request({ method: 'PUT', url: `/admin/tables/${id}`, data: tableData });
+    // Map frontend field names to backend field names
+    const { seats, status, ...rest } = tableData;
+    const payload: any = { ...rest };
+    if (seats !== undefined) payload.seating_capacity = seats;
+    // Backend does not accept a status string; is_occupied is managed by orders
+    return this.request({ method: 'PUT', url: `/admin/tables/${id}`, data: payload });
   }
 
   async deleteTable(id: string): Promise<APIResponse> {

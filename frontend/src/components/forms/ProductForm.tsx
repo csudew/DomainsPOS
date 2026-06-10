@@ -44,13 +44,13 @@ export function ProductForm({ product, onSuccess, onCancel, mode = 'create' }: P
 
   // Choose the appropriate schema and default values
   const schema = isEditing ? updateProductSchema : createProductSchema
-  const defaultValues = isEditing 
+  const defaultValues = isEditing
     ? {
         id: product.id,
         name: product.name,
         description: product.description || '',
         price: product.price,
-        category_id: product.category_id,
+        category_id: product.category_id ? String(product.category_id) : '',
         image_url: product.image_url || '',
         status: (product.is_available ? 'active' : 'inactive') as any,
         preparation_time: product.preparation_time || 5,
@@ -59,7 +59,7 @@ export function ProductForm({ product, onSuccess, onCancel, mode = 'create' }: P
         name: '',
         description: '',
         price: 0,
-        category_id: categories[0]?.id || 1,
+        category_id: categories[0]?.id ? String(categories[0].id) : '',
         image_url: '',
         status: 'active' as const,
         preparation_time: 5,

@@ -72,10 +72,10 @@ export function AdminTableManagement() {
     queryKey: ['admin-tables', pagination.page, pagination.pageSize, debouncedSearch, filterStatus],
     queryFn: () => apiClient.getAdminTables({
       page: pagination.page,
-      limit: pagination.pageSize,
+      per_page: pagination.pageSize,
       search: debouncedSearch || undefined,
       status: filterStatus !== 'all' ? filterStatus : undefined
-    }).then(res => res.data),
+    }),
   })
 
   // Also fetch summary stats (all tables for stats calculation)
@@ -85,8 +85,9 @@ export function AdminTableManagement() {
   })
 
   // Extract data and pagination info
-  const tables = Array.isArray(tablesData) ? tablesData : (tablesData as any)?.data || []
-  const paginationInfo = (tablesData as any)?.pagination || { total: 0 }
+  // getAdminTables returns { success, message, data: [...], meta: { total, ... } }
+  const tables = Array.isArray((tablesData as any)?.data) ? (tablesData as any).data : []
+  const paginationInfo = (tablesData as any)?.meta || { total: 0 }
 
   // Update pagination total
   useEffect(() => {

@@ -60,12 +60,17 @@ export function AdminStaffManagement() {
   // Fetch users with pagination
   const { data: usersData, isLoading, isFetching, isPlaceholderData } = useQuery({
     queryKey: ['users', pagination.page, pagination.pageSize, debouncedSearch],
-    queryFn: () => apiClient.getUsers().then((res: any) => res.data)
+    queryFn: () => apiClient.getAdminUsers({
+      page: pagination.page,
+      per_page: pagination.pageSize,
+      search: debouncedSearch || undefined
+    })
   })
 
   // Extract data and pagination info
-  const users = Array.isArray(usersData) ? usersData : (usersData as any)?.data || []
-  const paginationInfo = (usersData as any)?.pagination || { total: 0 }
+  // getAdminUsers returns { success, message, data: [...], meta: { total, ... } }
+  const users = Array.isArray((usersData as any)?.data) ? (usersData as any).data : []
+  const paginationInfo = (usersData as any)?.meta || { total: 0 }
 
   // Delete user mutation (keep existing functionality)  
   const deleteUserMutation = useMutation({
