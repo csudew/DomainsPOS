@@ -225,14 +225,10 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
               #{order.order_number}
             </CardTitle>
             <Badge
-              variant={
-                order.status === 'pending' ? 'destructive' :
-                order.status === 'confirmed' ? 'secondary' :
-                order.status === 'preparing' ? 'default' : 'outline'
-              }
+              variant={order.status === 'preparing' ? 'default' : 'destructive'}
               className="text-sm px-3 py-1"
             >
-              {order.status === 'pending' ? 'NEW ORDER' : order.status.toUpperCase()}
+              {order.status === 'preparing' ? 'COOKING' : 'NEW'}
             </Badge>
           </div>
           
@@ -353,18 +349,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
           
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            {order.status === 'pending' && (
-              <Button
-                onClick={() => handleOrderStatusUpdate(order.id, 'confirmed')}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 h-12 text-lg"
-                size="lg"
-              >
-                <AlertCircle className="w-5 h-5 mr-2" />
-                Accept Order
-              </Button>
-            )}
-
-            {order.status === 'confirmed' && (
+            {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'ready') && (
               <Button
                 onClick={() => handleOrderStatusUpdate(order.id, 'preparing')}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 text-lg"
@@ -374,60 +359,15 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
                 Start Cooking
               </Button>
             )}
-            
+
             {order.status === 'preparing' && (
-              <Button 
-                onClick={() => {
-                  // Mark all items as checked
-                  const allItemIds = new Set(displayItems.map(item => item.id));
-                  setCheckedItems(allItemIds);
-                  
-                  // Update all item statuses to ready
-                  displayItems.forEach(item => {
-                    handleItemStatusUpdate(order.id, item.id, 'ready');
-                  });
-                  
-                  // Mark order as ready
-                  setTimeout(() => {
-                    handleOrderStatusUpdate(order.id, 'ready');
-                    
-                    // Play ready notification sound
-                    if (soundEnabled) {
-                      try {
-                        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        
-                        oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
-                        gainNode.gain.setValueAtTime(volume * 0.3, audioContext.currentTime);
-                        
-                        oscillator.start();
-                        oscillator.stop(audioContext.currentTime + 0.3);
-                      } catch (error) {
-                        console.log('Sound notification failed:', error);
-                      }
-                    }
-                  }, 500);
-                }}
-                className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg"
-                size="lg"
-              >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Mark All Ready
-              </Button>
-            )}
-            
-            {order.status === 'ready' && (
               <Button
                 onClick={() => handleOrderStatusUpdate(order.id, 'completed')}
                 className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg"
                 size="lg"
               >
                 <CheckCircle className="w-5 h-5 mr-2" />
-                Hand Over / Complete
+                Complete
               </Button>
             )}
           </div>
@@ -592,29 +532,21 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Kitchen Display</h1>
                 <p className="text-sm text-gray-500">
-                  Chef {user.first_name} • {stats.total} active • {stats.pending} incoming
+                  Chef {user.first_name} • {stats.total} active orders
                 </p>
               </div>
             </div>
 
             {/* Status badges */}
             <div className="flex items-center space-x-3">
-              {stats.pending > 0 && (
-                <Badge variant="destructive" className="text-sm animate-pulse">
-                  {stats.pending} Incoming
-                </Badge>
-              )}
-              <Badge variant="secondary" className="text-sm">
-                {stats.newOrders} Accepted
+              <Badge variant="destructive" className="text-sm">
+                {stats.total - stats.preparing} New
               </Badge>
               <Badge variant="default" className="text-sm">
-                {stats.preparing} Preparing
-              </Badge>
-              <Badge variant="outline" className="text-sm">
-                {stats.ready} Ready
+                {stats.preparing} Cooking
               </Badge>
               {stats.urgent > 0 && (
-                <Badge variant="destructive" className="text-sm">
+                <Badge variant="destructive" className="text-sm animate-pulse">
                   {stats.urgent} Urgent
                 </Badge>
               )}
