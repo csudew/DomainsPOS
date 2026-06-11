@@ -33,7 +33,7 @@ export function CounterInterface() {
   const [activeTab, setActiveTab] = useState<'create' | 'queue'>('create')
   const [orderType, setOrderType] = useState<'takeout' | 'delivery'>('takeout')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [customerName, setCustomerName] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [orderNotes, setOrderNotes] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -86,7 +86,7 @@ export function CounterInterface() {
     mutationFn: async () => {
       const total = getTotalAmount()
       const orderRes = await apiClient.createCounterOrder({
-        customer_name: customerName || undefined,
+        customer_phone: customerPhone || undefined,
         order_type: orderType,
         items: cart.map(item => ({ product_id: item.product.id, quantity: item.quantity })),
         notes: orderNotes || undefined,
@@ -99,7 +99,7 @@ export function CounterInterface() {
     onSuccess: (orderNumber) => {
       setOrderSuccess(`Order #${orderNumber} created and payment processed`)
       setCart([])
-      setCustomerName('')
+      setCustomerPhone('')
       setOrderNotes('')
       queryClient.invalidateQueries({ queryKey: ['activeOrders'] })
       setTimeout(() => setOrderSuccess(null), 4000)
@@ -302,7 +302,7 @@ export function CounterInterface() {
                             <div>
                               <div className="font-bold text-green-900 text-lg">Order #{order.order_number}</div>
                               <div className="text-sm text-green-700">
-                                {order.customer_name || 'Guest'} · {order.items?.length || 0} items · {formatCurrency(order.total_amount)}
+                                {order.customer_phone || order.customer_name || 'Guest'} · {order.items?.length || 0} items · {formatCurrency(order.total_amount)}
                               </div>
                               {order.items && order.items.length > 0 && (
                                 <div className="mt-2 text-sm text-green-800">
@@ -385,11 +385,12 @@ export function CounterInterface() {
       {/* Right Panel — Order Summary + Payment */}
       <div className="w-1/3 flex flex-col bg-card">
         <div className="p-4 border-b border-border">
-          <h3 className="font-semibold mb-2">Customer</h3>
+          <h3 className="font-semibold mb-2">Customer Phone</h3>
           <Input
-            placeholder="Customer name (optional)"
-            value={customerName}
-            onChange={e => setCustomerName(e.target.value)}
+            type="tel"
+            placeholder="Phone number (for loyalty)"
+            value={customerPhone}
+            onChange={e => setCustomerPhone(e.target.value)}
           />
         </div>
 

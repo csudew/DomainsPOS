@@ -46,8 +46,8 @@ func (h *OrderHandler) GetOrders(c *gin.Context) {
 
 	// Build query with filters
 	queryBuilder := `
-		SELECT DISTINCT o.id, o.order_number, o.table_id, o.user_id, o.customer_name, 
-		       o.order_type, o.status, o.subtotal, o.tax_amount, o.discount_amount, 
+		SELECT DISTINCT o.id, o.order_number, o.table_id, o.user_id, o.customer_name, o.customer_phone,
+		       o.order_type, o.status, o.subtotal, o.tax_amount, o.discount_amount,
 		       o.total_amount, o.notes, o.created_at, o.updated_at, o.served_at, o.completed_at,
 		       t.table_number, t.location,
 		       u.username, u.first_name, u.last_name
@@ -111,7 +111,7 @@ func (h *OrderHandler) GetOrders(c *gin.Context) {
 		var username, firstName, lastName sql.NullString
 
 		err := rows.Scan(
-			&order.ID, &order.OrderNumber, &order.TableID, &order.UserID, &order.CustomerName,
+			&order.ID, &order.OrderNumber, &order.TableID, &order.UserID, &order.CustomerName, &order.CustomerPhone,
 			&order.OrderType, &order.Status, &order.Subtotal, &order.TaxAmount, &order.DiscountAmount,
 			&order.TotalAmount, &order.Notes, &order.CreatedAt, &order.UpdatedAt, &order.ServedAt, &order.CompletedAt,
 			&tableNumber, &tableLocation,
@@ -289,13 +289,13 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	// Create order
 	orderID := uuid.New()
 	orderQuery := `
-		INSERT INTO orders (id, order_number, table_id, user_id, customer_name, order_type, status, 
+		INSERT INTO orders (id, order_number, table_id, user_id, customer_name, customer_phone, order_type, status,
 		                   subtotal, tax_amount, discount_amount, total_amount, notes)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
-	_, err = tx.Exec(orderQuery, orderID, orderNumber, req.TableID, userID, req.CustomerName,
-		req.OrderType, "confirmed", subtotal, taxAmount, 0, totalAmount, req.Notes)
+	_, err = tx.Exec(orderQuery, orderID, orderNumber, req.TableID, userID, req.CustomerName, req.CustomerPhone,
+		req.OrderType, "pending", subtotal, taxAmount, 0, totalAmount, req.Notes)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Success: false,
@@ -549,8 +549,8 @@ func (h *OrderHandler) getOrderByID(orderID uuid.UUID) (*models.Order, error) {
 	var username, firstName, lastName sql.NullString
 
 	query := `
-		SELECT o.id, o.order_number, o.table_id, o.user_id, o.customer_name, 
-		       o.order_type, o.status, o.subtotal, o.tax_amount, o.discount_amount, 
+		SELECT o.id, o.order_number, o.table_id, o.user_id, o.customer_name, o.customer_phone,
+		       o.order_type, o.status, o.subtotal, o.tax_amount, o.discount_amount,
 		       o.total_amount, o.notes, o.created_at, o.updated_at, o.served_at, o.completed_at,
 		       t.table_number, t.location,
 		       u.username, u.first_name, u.last_name
@@ -561,7 +561,7 @@ func (h *OrderHandler) getOrderByID(orderID uuid.UUID) (*models.Order, error) {
 	`
 
 	err := h.db.QueryRow(query, orderID).Scan(
-		&order.ID, &order.OrderNumber, &order.TableID, &order.UserID, &order.CustomerName,
+		&order.ID, &order.OrderNumber, &order.TableID, &order.UserID, &order.CustomerName, &order.CustomerPhone,
 		&order.OrderType, &order.Status, &order.Subtotal, &order.TaxAmount, &order.DiscountAmount,
 		&order.TotalAmount, &order.Notes, &order.CreatedAt, &order.UpdatedAt, &order.ServedAt, &order.CompletedAt,
 		&tableNumber, &tableLocation,

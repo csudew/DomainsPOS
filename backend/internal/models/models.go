@@ -68,6 +68,7 @@ type Order struct {
 	TableID        *uuid.UUID   `json:"table_id"`
 	UserID         *uuid.UUID   `json:"user_id"`
 	CustomerName   *string      `json:"customer_name"`
+	CustomerPhone  *string      `json:"customer_phone"`
 	OrderType      string       `json:"order_type"` // dine_in, takeout, delivery
 	Status         string       `json:"status"`     // pending, confirmed, preparing, ready, served, completed, cancelled
 	Subtotal       float64      `json:"subtotal"`
@@ -144,11 +145,12 @@ type OrderStatusHistory struct {
 
 // CreateOrderRequest represents the request to create a new order
 type CreateOrderRequest struct {
-	TableID      *uuid.UUID        `json:"table_id"`
-	CustomerName *string           `json:"customer_name"`
-	OrderType    string            `json:"order_type"`
-	Items        []CreateOrderItem `json:"items"`
-	Notes        *string           `json:"notes"`
+	TableID       *uuid.UUID        `json:"table_id"`
+	CustomerName  *string           `json:"customer_name"`
+	CustomerPhone *string           `json:"customer_phone"`
+	OrderType     string            `json:"order_type"`
+	Items         []CreateOrderItem `json:"items"`
+	Notes         *string           `json:"notes"`
 }
 
 // CreateOrderItem represents an item in the order creation request

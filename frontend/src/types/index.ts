@@ -91,6 +91,7 @@ export interface Order {
   table_id?: string;
   user_id?: string;
   customer_name?: string;
+  customer_phone?: string;
   order_type: 'dine_in' | 'takeout' | 'delivery';
   status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled';
   subtotal: number;
@@ -126,6 +127,7 @@ export interface OrderItem {
 export interface CreateOrderRequest {
   table_id?: string;
   customer_name?: string;
+  customer_phone?: string;
   order_type: 'dine_in' | 'takeout' | 'delivery';
   items: CreateOrderItem[];
   notes?: string;

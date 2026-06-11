@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS orders (
     table_id UUID REFERENCES dining_tables(id) ON DELETE SET NULL,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     customer_name VARCHAR(100),
+    customer_phone VARCHAR(20),
     order_type VARCHAR(20) NOT NULL CHECK (order_type IN ('dine_in', 'takeout', 'delivery')),
     status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'confirmed', 'preparing', 'ready', 'served', 'completed', 'cancelled')) DEFAULT 'pending',
     subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -169,3 +170,6 @@ CREATE TRIGGER update_order_items_updated_at BEFORE UPDATE ON order_items FOR EA
 
 DROP TRIGGER IF EXISTS update_inventory_updated_at ON inventory;
 CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Add customer_phone to existing orders tables (idempotent)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(20);
