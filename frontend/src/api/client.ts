@@ -208,7 +208,7 @@ class APIClient {
   async processPayment(orderId: string, payment: ProcessPaymentRequest): Promise<APIResponse<Payment>> {
     return this.request({
       method: 'POST',
-      url: `/orders/${orderId}/payments`,
+      url: `/counter/orders/${orderId}/payments`,
       data: payment,
     });
   }

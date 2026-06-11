@@ -63,18 +63,18 @@ func SetupRoutes(router *gin.RouterGroup, db *sql.DB, authMiddleware gin.Handler
 		protected.GET("/orders/:id/payment-summary", paymentHandler.GetPaymentSummary)
 	}
 
-	// Server routes (server role - dine-in orders only)
+	// Server routes (server role - takeout/delivery orders)
 	server := router.Group("/server")
 	server.Use(authMiddleware)
 	server.Use(middleware.RequireRole("server"))
 	{
-		server.POST("/orders", createDineInOrder(db)) // Only dine-in orders
+		server.POST("/orders", orderHandler.CreateOrder) // All order types (takeout/delivery)
 	}
 
-	// Counter routes (counter role - all order types and payments)
+	// Counter routes (counter, server, admin, manager - all order types and payments)
 	counter := router.Group("/counter")
 	counter.Use(authMiddleware)
-	counter.Use(middleware.RequireRole("counter"))
+	counter.Use(middleware.RequireRoles([]string{"counter", "server", "admin", "manager"}))
 	{
 		counter.POST("/orders", orderHandler.CreateOrder)                   // All order types
 		counter.POST("/orders/:id/payments", paymentHandler.ProcessPayment) // Process payments
