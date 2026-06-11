@@ -333,9 +333,11 @@ export function CounterInterface() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-bold text-green-900 text-lg">Order #{order.order_number}</div>
+                              <div className="font-bold text-green-900 text-lg">
+                                {order.customer_phone || `#${order.order_number}`}
+                              </div>
                               <div className="text-sm text-green-700">
-                                {order.customer_phone || order.customer_name || 'Guest'} · {order.items?.length || 0} items · {formatCurrency(order.total_amount)}
+                                {order.items?.length || 0} items · {formatCurrency(order.total_amount)}
                               </div>
                               {order.items && order.items.length > 0 && (
                                 <div className="mt-2 text-sm text-green-800">
@@ -386,10 +388,11 @@ export function CounterInterface() {
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <div className="font-semibold">Order #{order.order_number}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {order.customer_name || 'Guest'} · {order.items?.length || 0} items
+                                <div className="font-semibold">
+                                  {order.customer_phone || `#${order.order_number}`}
                                 </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {order.items?.length || 0} items
                                 {order.items && order.items.length > 0 && (
                                   <div className="mt-1 text-xs text-muted-foreground">
                                     {order.items.map(i => `${i.quantity}× ${i.product?.name}`).join(', ')}
