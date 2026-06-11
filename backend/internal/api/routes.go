@@ -315,9 +315,10 @@ func getKitchenOrders(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		status := c.DefaultQuery("status", "all")
 
+		args := []interface{}{}
 		query := `
-			SELECT DISTINCT o.id, o.order_number, o.table_id, o.order_type, o.status, 
-			       o.created_at, o.customer_name,
+			SELECT o.id, o.order_number, o.table_id, o.order_type, o.status,
+			       o.created_at, o.updated_at, o.customer_name, o.notes,
 			       t.table_number
 			FROM orders o
 			LEFT JOIN dining_tables t ON o.table_id = t.id
@@ -325,51 +326,117 @@ func getKitchenOrders(db *sql.DB) gin.HandlerFunc {
 		`
 
 		if status != "all" {
-			query += ` AND o.status = '` + status + `'`
+			args = append(args, status)
+			query += fmt.Sprintf(" AND o.status = $%d", len(args))
 		}
 
 		query += ` ORDER BY o.created_at ASC`
 
-		rows, err := db.Query(query)
+		rows, err := db.Query(query, args...)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"success": false,
-				"message": "Failed to fetch kitchen orders",
-				"error":   err.Error(),
-			})
+			c.JSON(500, gin.H{"success": false, "message": "Failed to fetch kitchen orders", "error": err.Error()})
 			return
 		}
 		defer rows.Close()
 
-		var orders []map[string]interface{}
-		for rows.Next() {
-			var orderID, tableID interface{}
-			var orderNumber, orderType, orderStatus, customerName, tableNumber sql.NullString
-			var createdAt interface{}
+		type orderRow struct {
+			id           string
+			orderNumber  string
+			tableID      sql.NullString
+			orderType    string
+			status       string
+			createdAt    string
+			updatedAt    string
+			customerName sql.NullString
+			notes        sql.NullString
+			tableNumber  sql.NullString
+		}
 
-			err := rows.Scan(&orderID, &orderNumber, &tableID, &orderType, &orderStatus,
-				&createdAt, &customerName, &tableNumber)
-			if err != nil {
-				c.JSON(500, gin.H{
-					"success": false,
-					"message": "Failed to scan kitchen order",
-					"error":   err.Error(),
-				})
+		orderMap := map[string]*map[string]interface{}{}
+		var orderIDs []string
+
+		for rows.Next() {
+			var r orderRow
+			if err := rows.Scan(&r.id, &r.orderNumber, &r.tableID, &r.orderType, &r.status,
+				&r.createdAt, &r.updatedAt, &r.customerName, &r.notes, &r.tableNumber); err != nil {
+				c.JSON(500, gin.H{"success": false, "message": "Failed to scan kitchen order", "error": err.Error()})
 				return
 			}
 
-			order := map[string]interface{}{
-				"id":            orderID,
-				"order_number":  orderNumber.String,
-				"table_id":      tableID,
-				"table_number":  tableNumber.String,
-				"order_type":    orderType.String,
-				"status":        orderStatus.String,
-				"customer_name": customerName.String,
-				"created_at":    createdAt,
+			o := map[string]interface{}{
+				"id":            r.id,
+				"order_number":  r.orderNumber,
+				"table_id":      r.tableID.String,
+				"order_type":    r.orderType,
+				"status":        r.status,
+				"created_at":    r.createdAt,
+				"updated_at":    r.updatedAt,
+				"customer_name": r.customerName.String,
+				"notes":         r.notes.String,
+				"table":         nil,
+				"items":         []interface{}{},
+			}
+			if r.tableNumber.Valid {
+				o["table"] = map[string]interface{}{"table_number": r.tableNumber.String}
+			}
+			orderMap[r.id] = &o
+			orderIDs = append(orderIDs, r.id)
+		}
+
+		if len(orderIDs) > 0 {
+			placeholders := ""
+			itemArgs := []interface{}{}
+			for i, id := range orderIDs {
+				if i > 0 {
+					placeholders += ","
+				}
+				itemArgs = append(itemArgs, id)
+				placeholders += fmt.Sprintf("$%d", i+1)
 			}
 
-			orders = append(orders, order)
+			itemQuery := fmt.Sprintf(`
+				SELECT oi.id, oi.order_id, oi.quantity, oi.special_instructions, oi.status,
+				       p.id, p.name, p.price
+				FROM order_items oi
+				JOIN products p ON oi.product_id = p.id
+				WHERE oi.order_id IN (%s)
+				ORDER BY oi.created_at ASC
+			`, placeholders)
+
+			itemRows, err := db.Query(itemQuery, itemArgs...)
+			if err == nil {
+				defer itemRows.Close()
+				for itemRows.Next() {
+					var itemID, orderID, itemStatus, productID, productName string
+					var qty int
+					var specialInstructions sql.NullString
+					var price float64
+
+					if err := itemRows.Scan(&itemID, &orderID, &qty, &specialInstructions, &itemStatus,
+						&productID, &productName, &price); err == nil {
+						item := map[string]interface{}{
+							"id":                   itemID,
+							"order_id":             orderID,
+							"quantity":             qty,
+							"special_instructions": specialInstructions.String,
+							"status":               itemStatus,
+							"product": map[string]interface{}{
+								"id":    productID,
+								"name":  productName,
+								"price": price,
+							},
+						}
+						if o, ok := orderMap[orderID]; ok {
+							(*o)["items"] = append((*o)["items"].([]interface{}), item)
+						}
+					}
+				}
+			}
+		}
+
+		orders := make([]map[string]interface{}, 0, len(orderIDs))
+		for _, id := range orderIDs {
+			orders = append(orders, *orderMap[id])
 		}
 
 		c.JSON(200, gin.H{

@@ -295,7 +295,7 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	`
 
 	_, err = tx.Exec(orderQuery, orderID, orderNumber, req.TableID, userID, req.CustomerName,
-		req.OrderType, "pending", subtotal, taxAmount, 0, totalAmount, req.Notes)
+		req.OrderType, "confirmed", subtotal, taxAmount, 0, totalAmount, req.Notes)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Success: false,
