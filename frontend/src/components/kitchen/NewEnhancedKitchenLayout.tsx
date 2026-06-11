@@ -42,11 +42,12 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
 
   // Filter orders to only show kitchen-relevant statuses
   const kitchenRelevantOrders = orders.filter((order: Order) =>
-    ['confirmed', 'preparing', 'ready', 'completed'].includes(order.status)
+    ['pending', 'confirmed', 'preparing', 'ready', 'completed'].includes(order.status)
   );
 
   // Group orders by status
   const ordersByStatus = {
+    pending: kitchenRelevantOrders.filter((order: Order) => order.status === 'pending'),
     confirmed: kitchenRelevantOrders.filter((order: Order) => order.status === 'confirmed'),
     preparing: kitchenRelevantOrders.filter((order: Order) => order.status === 'preparing'),
     ready: kitchenRelevantOrders.filter((order: Order) => order.status === 'ready'),
@@ -55,7 +56,8 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
 
   // Calculate statistics based on kitchen-relevant orders only
   const stats = {
-    total: kitchenRelevantOrders.length,
+    total: kitchenRelevantOrders.filter((o: Order) => o.status !== 'completed').length,
+    pending: ordersByStatus.pending.length,
     newOrders: ordersByStatus.confirmed.length,
     preparing: ordersByStatus.preparing.length,
     ready: ordersByStatus.ready.length,
@@ -154,10 +156,11 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
     };
 
     const getUrgencyColor = () => {
+      if (order.status === 'pending') return 'border-orange-500 bg-orange-50';
       const created = new Date(order.created_at);
       const now = new Date();
       const minutesWaiting = Math.floor((now.getTime() - created.getTime()) / 1000 / 60);
-      
+
       if (minutesWaiting > 20) return 'border-red-500 bg-red-50';
       if (minutesWaiting > 10) return 'border-orange-500 bg-orange-50';
       return 'border-blue-500 bg-blue-50';
@@ -221,11 +224,15 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
             <CardTitle className="text-2xl font-bold">
               #{order.order_number}
             </CardTitle>
-            <Badge 
-              variant={order.status === 'confirmed' ? 'secondary' : order.status === 'preparing' ? 'default' : 'outline'}
+            <Badge
+              variant={
+                order.status === 'pending' ? 'destructive' :
+                order.status === 'confirmed' ? 'secondary' :
+                order.status === 'preparing' ? 'default' : 'outline'
+              }
               className="text-sm px-3 py-1"
             >
-              {order.status.toUpperCase()}
+              {order.status === 'pending' ? 'NEW ORDER' : order.status.toUpperCase()}
             </Badge>
           </div>
           
@@ -346,8 +353,19 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
           
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
+            {order.status === 'pending' && (
+              <Button
+                onClick={() => handleOrderStatusUpdate(order.id, 'confirmed')}
+                className="flex-1 bg-orange-600 hover:bg-orange-700 h-12 text-lg"
+                size="lg"
+              >
+                <AlertCircle className="w-5 h-5 mr-2" />
+                Accept Order
+              </Button>
+            )}
+
             {order.status === 'confirmed' && (
-              <Button 
+              <Button
                 onClick={() => handleOrderStatusUpdate(order.id, 'preparing')}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 text-lg"
                 size="lg"
@@ -574,15 +592,20 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Kitchen Display</h1>
                 <p className="text-sm text-gray-500">
-                  Chef {user.first_name} • {stats.total} active orders
+                  Chef {user.first_name} • {stats.total} active • {stats.pending} incoming
                 </p>
               </div>
             </div>
 
             {/* Status badges */}
             <div className="flex items-center space-x-3">
+              {stats.pending > 0 && (
+                <Badge variant="destructive" className="text-sm animate-pulse">
+                  {stats.pending} Incoming
+                </Badge>
+              )}
               <Badge variant="secondary" className="text-sm">
-                {stats.newOrders} New
+                {stats.newOrders} Accepted
               </Badge>
               <Badge variant="default" className="text-sm">
                 {stats.preparing} Preparing
@@ -672,7 +695,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="active-orders" className="text-lg py-3">
               <ChefHat className="w-5 h-5 mr-2" />
-              Kitchen Orders ({stats.total})
+              Active Orders ({stats.total})
             </TabsTrigger>
             <TabsTrigger value="takeaway-ready" className="text-lg py-3">
               <Package className="w-5 h-5 mr-2" />
@@ -698,7 +721,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
                   </Button>
                 </div>
               </div>
-            ) : kitchenRelevantOrders.length === 0 ? (
+            ) : stats.total === 0 ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <ChefHat className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -708,7 +731,9 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {kitchenRelevantOrders.map((order) => (
+                {kitchenRelevantOrders
+                  .filter((order: Order) => order.status !== 'completed')
+                  .map((order: Order) => (
                   <EnhancedOrderCard key={order.id} order={order} />
                 ))}
               </div>
