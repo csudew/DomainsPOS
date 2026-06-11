@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ServerInterface } from '@/components/server/ServerInterface'
 import { CounterInterface } from '@/components/counter/CounterInterface'
 import { POSLayout } from '@/components/pos/POSLayout'
 import { NewEnhancedKitchenLayout } from '@/components/kitchen/NewEnhancedKitchenLayout'
 import { 
   LayoutDashboard, 
-  Users, 
-  CreditCard, 
+  CreditCard,
   ChefHat,
   ShoppingCart,
   Settings,
@@ -32,7 +30,7 @@ export function RoleBasedLayout({ user }: RoleBasedLayoutProps) {
       case 'manager':
         return 'dashboard'
       case 'server':
-        return 'server'
+        return 'counter'
       case 'counter':
         return 'counter'
       case 'kitchen':
@@ -65,10 +63,10 @@ export function RoleBasedLayout({ user }: RoleBasedLayoutProps) {
         }
       case 'server':
         return {
-          title: 'Server',
+          title: 'Counter Staff',
           color: 'bg-blue-100 text-blue-800',
-          icon: <Users className="w-4 h-4" />,
-          description: 'Dine-in order creation'
+          icon: <CreditCard className="w-4 h-4" />,
+          description: 'Order creation and payment processing'
         }
       case 'counter':
         return {
@@ -104,24 +102,14 @@ export function RoleBasedLayout({ user }: RoleBasedLayoutProps) {
     if (role === 'admin' || role === 'manager') {
       views.push(
         { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: 'pos', label: 'General POS', icon: <ShoppingCart className="w-4 h-4" /> },
-        { id: 'server', label: 'Server Interface', icon: <Users className="w-4 h-4" /> },
         { id: 'counter', label: 'Counter/Checkout', icon: <CreditCard className="w-4 h-4" /> },
         { id: 'kitchen', label: 'Kitchen Display', icon: <ChefHat className="w-4 h-4" /> }
       )
     }
-    // Server gets server interface and general POS
-    else if (role === 'server') {
+    // Server and counter both get the counter interface
+    else if (role === 'server' || role === 'counter') {
       views.push(
-        { id: 'server', label: 'Server Interface', icon: <Users className="w-4 h-4" /> },
-        { id: 'pos', label: 'General POS', icon: <ShoppingCart className="w-4 h-4" /> }
-      )
-    }
-    // Counter gets counter interface and general POS  
-    else if (role === 'counter') {
-      views.push(
-        { id: 'counter', label: 'Counter/Checkout', icon: <CreditCard className="w-4 h-4" /> },
-        { id: 'pos', label: 'General POS', icon: <ShoppingCart className="w-4 h-4" /> }
+        { id: 'counter', label: 'Counter/Checkout', icon: <CreditCard className="w-4 h-4" /> }
       )
     }
     // Kitchen staff gets kitchen display only
@@ -146,8 +134,6 @@ export function RoleBasedLayout({ user }: RoleBasedLayoutProps) {
     switch (currentView) {
       case 'dashboard':
         return <AdminLayout user={user} />
-      case 'server':
-        return <ServerInterface />
       case 'counter':
         return <CounterInterface />
       case 'kitchen':

@@ -5,8 +5,7 @@ import { UserMenu } from '@/components/ui/user-menu'
 // import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card' // Removed - not used in simplified layout
 import { 
   LayoutDashboard, 
-  Users, 
-  CreditCard, 
+  CreditCard,
   ChefHat,
   ShoppingCart,
   Settings,
@@ -14,8 +13,7 @@ import {
   Menu,
   BarChart3,
   UserCog,
-  Store,
-  LayoutGrid
+  Store
 } from 'lucide-react'
 import type { User as UserType } from '@/types'
 import apiClient from '@/api/client'
@@ -23,7 +21,6 @@ import apiClient from '@/api/client'
 // Import components for different sections
 import { AdminDashboard } from './AdminDashboard'
 import { POSLayout } from '@/components/pos/POSLayout'
-import { ServerInterface } from '@/components/server/ServerInterface'
 import { CounterInterface } from '@/components/counter/CounterInterface'
 import { NewEnhancedKitchenLayout } from '@/components/kitchen/NewEnhancedKitchenLayout'
 import { ToastDemo } from '@/components/ui/demo-toast'
@@ -31,7 +28,6 @@ import { FormDemo } from '@/components/forms/FormDemo'
 import { AdminStaffManagement } from './AdminStaffManagement'
 import { AdminSettings } from './AdminSettings'
 import { AdminMenuManagement } from './AdminMenuManagement'
-import { AdminTableManagement } from './AdminTableManagement'
 import { AdminReports } from './AdminReports'
 
 interface AdminLayoutProps {
@@ -46,12 +42,6 @@ const adminSections = [
     description: 'Overview and statistics'
   },
 
-  {
-    id: 'server',
-    label: 'Server Interface',
-    icon: <Users className="w-5 h-5" />,
-    description: 'Server order interface'
-  },
   {
     id: 'counter',
     label: 'Counter/Checkout',
@@ -81,12 +71,6 @@ const adminSections = [
     label: 'Manage Menu',
     icon: <Menu className="w-5 h-5" />,
     description: 'Categories and products'
-  },
-  {
-    id: 'tables',
-    label: 'Manage Tables',
-    icon: <LayoutGrid className="w-5 h-5" />,
-    description: 'Dining table setup'
   },
   {
     id: 'reports',
@@ -124,8 +108,6 @@ export function AdminLayout({ user }: AdminLayoutProps) {
     switch (currentSection) {
       case 'dashboard':
         return <AdminDashboard />
-      case 'server':
-        return <ServerInterface />
       case 'counter':
         return <CounterInterface />
       case 'kitchen':
@@ -142,8 +124,6 @@ export function AdminLayout({ user }: AdminLayoutProps) {
         return <AdminStaffManagement />
       case 'menu':
         return <AdminMenuManagement />
-      case 'tables':
-        return <AdminTableManagement />
       case 'reports':
         return <AdminReports />
       default:

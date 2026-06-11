@@ -322,7 +322,7 @@ func getKitchenOrders(db *sql.DB) gin.HandlerFunc {
 			       t.table_number
 			FROM orders o
 			LEFT JOIN dining_tables t ON o.table_id = t.id
-			WHERE o.status IN ('pending', 'confirmed', 'preparing', 'ready')
+			WHERE o.status IN ('pending', 'confirmed', 'preparing')
 		`
 
 		if status != "all" {

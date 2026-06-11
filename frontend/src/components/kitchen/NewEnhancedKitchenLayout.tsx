@@ -362,7 +362,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
 
             {order.status === 'preparing' && (
               <Button
-                onClick={() => handleOrderStatusUpdate(order.id, 'completed')}
+                onClick={() => handleOrderStatusUpdate(order.id, 'ready')}
                 className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg"
                 size="lg"
               >
