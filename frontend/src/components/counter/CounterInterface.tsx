@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
-import type { LoyaltyCustomer } from '@/types'
+import { printReceipt } from '@/utils/printReceipt'
+import type { Order, LoyaltyCustomer } from '@/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,7 @@ import {
   Bell,
   HandCoins,
   Smartphone,
+  Printer,
 } from 'lucide-react'
 import type { Product, Order } from '@/types'
 
@@ -41,6 +43,7 @@ export function CounterInterface() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card' | 'debit_card' | 'digital_wallet'>('cash')
   const [readyNotification, setReadyNotification] = useState(0)
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null)
+  const [lastPrintedOrder, setLastPrintedOrder] = useState<{ order: Order; pm: string } | null>(null)
 
   const [loyaltyPhone, setLoyaltyPhone] = useState('')
   const prevReadyCountRef = useRef(0)
@@ -97,7 +100,7 @@ export function CounterInterface() {
     ['pending', 'confirmed', 'preparing'].includes(o.status)
   )
 
-  // Create order then immediately process payment
+  // Create order then immediately process payment, then print receipt
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       const total = getTotalAmount()
@@ -108,12 +111,14 @@ export function CounterInterface() {
         notes: orderNotes || undefined,
       })
       if (!orderRes.success || !orderRes.data) throw new Error('Order creation failed')
-      const orderId = orderRes.data.id
-      await apiClient.processCounterPayment(orderId, { payment_method: paymentMethod, amount: total })
-      return orderRes.data.order_number as string
+      const order = orderRes.data as Order
+      await apiClient.processCounterPayment(order.id, { payment_method: paymentMethod, amount: total })
+      return { order, paymentMethod }
     },
-    onSuccess: (orderNumber) => {
-      setOrderSuccess(`Order #${orderNumber} created and payment processed`)
+    onSuccess: ({ order, paymentMethod: pm }) => {
+      setOrderSuccess(`Order #${order.order_number} placed`)
+      setLastPrintedOrder({ order, pm })
+      printReceipt(order, pm, loyaltyCustomer)
       setCart([])
       setCustomerPhone('')
       setLoyaltyPhone('')
@@ -443,6 +448,15 @@ export function CounterInterface() {
               <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No items added</p>
               <p className="text-sm">Select products from the menu</p>
+              {lastPrintedOrder && (
+                <button
+                  onClick={() => printReceipt(lastPrintedOrder.order, lastPrintedOrder.pm, loyaltyCustomer)}
+                  className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mx-auto"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Reprint #{lastPrintedOrder.order.order_number}
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -513,9 +527,20 @@ export function CounterInterface() {
             </div>
 
             {orderSuccess && (
-              <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg p-3 flex items-center gap-2">
-                <Check className="w-4 h-4 shrink-0" />
-                {orderSuccess}
+              <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg p-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 shrink-0" />
+                  {orderSuccess} — receipt sent to printer
+                </div>
+                {lastPrintedOrder && (
+                  <button
+                    onClick={() => printReceipt(lastPrintedOrder.order, lastPrintedOrder.pm, loyaltyCustomer)}
+                    className="flex items-center gap-1 text-xs text-green-700 hover:text-green-900 font-medium shrink-0"
+                    title="Reprint receipt"
+                  >
+                    <Printer className="w-3.5 h-3.5" />Reprint
+                  </button>
+                )}
               </div>
             )}
 
