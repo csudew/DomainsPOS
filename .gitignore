@@ -87,3 +87,10 @@ files/
 *.temp
 .vercel
 .env*
+
+# Vite cache timestamps
+frontend/vite.config.ts.timestamp-*
+
+# Postman and test reports
+*.postman_collection.json
+report.html

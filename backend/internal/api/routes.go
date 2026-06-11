@@ -145,45 +145,74 @@ func SetupRoutes(router *gin.RouterGroup, db *sql.DB, authMiddleware gin.Handler
 // Dashboard stats handler
 func getDashboardStats(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get basic stats for dashboard
 		stats := make(map[string]interface{})
 
-		// Today's orders
+		// Today's orders (all statuses)
 		var todayOrders int
-		db.QueryRow(`
-			SELECT COUNT(*) 
-			FROM orders 
-			WHERE DATE(created_at) = CURRENT_DATE
-		`).Scan(&todayOrders)
+		db.QueryRow(`SELECT COUNT(*) FROM orders WHERE DATE(created_at AT TIME ZONE 'UTC') = CURRENT_DATE`).Scan(&todayOrders)
 
-		// Today's revenue
+		// Today's revenue (completed orders only)
 		var todayRevenue float64
-		db.QueryRow(`
-			SELECT COALESCE(SUM(total_amount), 0) 
-			FROM orders 
-			WHERE DATE(created_at) = CURRENT_DATE AND status = 'completed'
-		`).Scan(&todayRevenue)
+		db.QueryRow(`SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at AT TIME ZONE 'UTC') = CURRENT_DATE AND status = 'completed'`).Scan(&todayRevenue)
 
-		// Active orders
+		// Active orders (all non-terminal)
 		var activeOrders int
-		db.QueryRow(`
-			SELECT COUNT(*) 
-			FROM orders 
-			WHERE status NOT IN ('completed', 'cancelled')
-		`).Scan(&activeOrders)
+		db.QueryRow(`SELECT COUNT(*) FROM orders WHERE status NOT IN ('completed', 'cancelled')`).Scan(&activeOrders)
 
-		// Occupied tables
-		var occupiedTables int
-		db.QueryRow(`
-			SELECT COUNT(*) 
-			FROM dining_tables 
-			WHERE is_occupied = true
-		`).Scan(&occupiedTables)
+		// Order pipeline breakdown
+		var pendingOrders, preparingOrders, readyOrders, completedToday int
+		db.QueryRow(`SELECT COUNT(*) FROM orders WHERE status = 'pending'`).Scan(&pendingOrders)
+		db.QueryRow(`SELECT COUNT(*) FROM orders WHERE status IN ('confirmed', 'preparing')`).Scan(&preparingOrders)
+		db.QueryRow(`SELECT COUNT(*) FROM orders WHERE status = 'ready'`).Scan(&readyOrders)
+		db.QueryRow(`SELECT COUNT(*) FROM orders WHERE status = 'completed' AND DATE(created_at AT TIME ZONE 'UTC') = CURRENT_DATE`).Scan(&completedToday)
+
+		// Average order value today
+		var avgOrderValue float64
+		db.QueryRow(`SELECT COALESCE(AVG(total_amount), 0) FROM orders WHERE DATE(created_at AT TIME ZONE 'UTC') = CURRENT_DATE AND status NOT IN ('cancelled')`).Scan(&avgOrderValue)
+
+		// Loyalty members total
+		var loyaltyMembers int
+		db.QueryRow(`SELECT COUNT(*) FROM loyalty_customers`).Scan(&loyaltyMembers)
+
+		// New loyalty members today
+		var newLoyaltyToday int
+		db.QueryRow(`SELECT COUNT(*) FROM loyalty_customers WHERE DATE(created_at AT TIME ZONE 'UTC') = CURRENT_DATE`).Scan(&newLoyaltyToday)
+
+		// Top products today
+		type TopProduct struct {
+			Name     string  `json:"name"`
+			Quantity int     `json:"quantity"`
+			Revenue  float64 `json:"revenue"`
+		}
+		topProducts := []TopProduct{}
+		rows, _ := db.Query(`
+			SELECT p.name, SUM(oi.quantity) as qty, SUM(oi.total_price) as rev
+			FROM order_items oi
+			JOIN products p ON oi.product_id = p.id
+			JOIN orders o ON oi.order_id = o.id
+			WHERE DATE(o.created_at AT TIME ZONE 'UTC') = CURRENT_DATE AND o.status NOT IN ('cancelled')
+			GROUP BY p.name ORDER BY qty DESC LIMIT 5
+		`)
+		if rows != nil {
+			defer rows.Close()
+			for rows.Next() {
+				var tp TopProduct
+				rows.Scan(&tp.Name, &tp.Quantity, &tp.Revenue)
+				topProducts = append(topProducts, tp)
+			}
+		}
 
 		stats["today_orders"] = todayOrders
 		stats["today_revenue"] = todayRevenue
 		stats["active_orders"] = activeOrders
-		stats["occupied_tables"] = occupiedTables
+		stats["pending_orders"] = pendingOrders
+		stats["preparing_orders"] = preparingOrders
+		stats["ready_orders"] = readyOrders
+		stats["completed_today"] = completedToday
+		stats["avg_order_value"] = avgOrderValue
+		stats["loyalty_members"] = loyaltyMembers
+		stats["new_loyalty_today"] = newLoyaltyToday
+		stats["top_products"] = topProducts
 
 		c.JSON(200, gin.H{
 			"success": true,

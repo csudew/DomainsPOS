@@ -193,7 +193,15 @@ export interface DashboardStats {
   today_orders: number;
   today_revenue: number;
   active_orders: number;
-  occupied_tables: number;
+  occupied_tables: number; // legacy, kept for compat
+  pending_orders: number;
+  preparing_orders: number;
+  ready_orders: number;
+  completed_today: number;
+  avg_order_value: number;
+  loyalty_members: number;
+  new_loyalty_today: number;
+  top_products: Array<{ name: string; quantity: number; revenue: number }>;
 }
 
 export interface SalesReportItem {
