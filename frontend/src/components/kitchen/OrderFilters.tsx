@@ -11,6 +11,7 @@ interface OrderFiltersProps {
     confirmed: number
     preparing: number
     ready: number
+    completed?: number
   }
 }
 
@@ -26,6 +27,7 @@ export function OrderFilters({
     { key: 'confirmed', label: 'New', count: orderCounts.confirmed, color: 'bg-yellow-500' },
     { key: 'preparing', label: 'Preparing', count: orderCounts.preparing, color: 'bg-blue-500' },
     { key: 'ready', label: 'Ready', count: orderCounts.ready, color: 'bg-green-500' },
+    { key: 'completed', label: 'Completed', count: orderCounts.completed ?? 0, color: 'bg-purple-500' },
   ]
 
   return (

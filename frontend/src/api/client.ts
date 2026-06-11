@@ -275,11 +275,11 @@ class APIClient {
     });
   }
 
-  // Role-specific order creation
+  // Role-specific order creation (server now uses counter endpoint for takeout/delivery)
   async createServerOrder(order: CreateOrderRequest): Promise<APIResponse<Order>> {
     return this.request({
       method: 'POST',
-      url: '/server/orders',
+      url: '/counter/orders',
       data: order,
     });
   }

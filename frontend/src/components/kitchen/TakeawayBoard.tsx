@@ -72,13 +72,13 @@ export function TakeawayBoard({
     setPreviousReadyOrders(currentReadyIds);
   }, [orders, previousReadyOrders, soundPlayed]);
 
-  // Handle order completion
+  // Handle order completion (hand over)
   const handleOrderComplete = useCallback(async (orderId: string) => {
     try {
-      await apiClient.updateOrderStatus(orderId, 'served');
+      await apiClient.updateOrderStatus(orderId, 'completed');
       refetch();
       onOrderComplete?.(orderId);
-      
+
       // Remove from sound played set
       setSoundPlayed(prev => {
         const newSet = new Set(prev);
@@ -86,7 +86,7 @@ export function TakeawayBoard({
         return newSet;
       });
     } catch (error) {
-      console.error('Failed to mark order as served:', error);
+      console.error('Failed to complete order:', error);
     }
   }, [refetch, onOrderComplete]);
 
@@ -112,7 +112,7 @@ export function TakeawayBoard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5" />
-          Ready for Pickup ({orders.length})
+          Ready for Handover ({orders.length})
           {orders.some(order => order.isNewlyReady) && (
             <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 animate-pulse">
               <Volume2 className="h-3 w-3 mr-1" />
@@ -232,7 +232,7 @@ function TakeawayOrderCard({ order, onComplete }: TakeawayOrderCardProps) {
             variant={urgency.level === 'critical' ? 'destructive' : 'default'}
           >
             <CheckCircle className="h-4 w-4 mr-1" />
-            Mark Served
+            Hand Over / Complete
           </Button>
         </div>
       </CardContent>

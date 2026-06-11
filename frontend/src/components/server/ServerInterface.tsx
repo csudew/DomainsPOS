@@ -6,20 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
-  Users, 
+import {
+  Plus,
+  Minus,
+  ShoppingCart,
   User,
   Check,
   Clock,
-  Table as TableIcon,
   Search,
-  Settings,
-  Package
+  Package,
+  Car
 } from 'lucide-react'
-import type { Product, DiningTable } from '@/types'
+import type { Product } from '@/types'
 
 interface CartItem {
   product: Product
@@ -28,8 +26,7 @@ interface CartItem {
 }
 
 interface CreateOrderRequest {
-  order_type: 'dine_in' | 'takeout' | 'delivery'
-  table_id: string
+  order_type: 'takeout' | 'delivery'
   customer_name?: string
   items: Array<{
     product_id: string
@@ -41,13 +38,12 @@ interface CreateOrderRequest {
 
 export function ServerInterface() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedTable, setSelectedTable] = useState<DiningTable | null>(null)
+  const [orderType, setOrderType] = useState<'takeout' | 'delivery'>('takeout')
   const [customerName, setCustomerName] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [orderNotes, setOrderNotes] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [showTableView, setShowTableView] = useState(false)
-  
+
   const queryClient = useQueryClient()
 
   // Fetch categories
@@ -83,51 +79,20 @@ export function ServerInterface() {
     }
   })
 
-  // Fetch available tables (not occupied)
-  const { data: tables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: async () => {
-      try {
-        const response = await apiClient.getTables()
-        return response.data || []
-      } catch (error) {
-        console.error('Failed to fetch tables:', error)
-        return []
-      }
-    }
-  })
-
-  // Fetch active orders to show table status
-  const { data: activeOrders = [] } = useQuery({
-    queryKey: ['active-orders'],
-    queryFn: async () => {
-      try {
-        const response = await apiClient.getOrders({ status: 'pending,confirmed,preparing,ready' })
-        return response.data || []
-      } catch (error) {
-        console.error('Failed to fetch active orders:', error)
-        return []
-      }
-    }
-  })
-
-  // Create order mutation (server endpoint - dine-in only)
+  // Create order mutation (use counter endpoint for all order types)
   const createOrderMutation = useMutation({
-    mutationFn: (orderData: CreateOrderRequest) => 
-      apiClient.createServerOrder(orderData),
+    mutationFn: (orderData: CreateOrderRequest) =>
+      apiClient.createCounterOrder(orderData),
     onSuccess: (data) => {
       const orderNumber = data.data?.order_number
       // Reset form
       setCart([])
-      setSelectedTable(null)
       setCustomerName('')
       setOrderNotes('')
-      
+
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ['orders'] })
-      queryClient.invalidateQueries({ queryKey: ['active-orders'] })
-      queryClient.invalidateQueries({ queryKey: ['tables'] })
-      
+
       toastHelpers.orderCreated(orderNumber)
     },
     onError: (error: any) => {
@@ -140,36 +105,6 @@ export function ServerInterface() {
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   )
-
-  // Helper function to get table status
-  const getTableStatus = (table: DiningTable) => {
-    // Ensure activeOrders is always an array
-    const orders = Array.isArray(activeOrders) ? activeOrders : []
-    const hasActiveOrder = orders.some(order => order.table_id === table.id)
-    
-    if (table.is_occupied && hasActiveOrder) {
-      return { status: 'occupied', label: 'Occupied', color: 'bg-red-100 text-red-800 border-red-200' }
-    } else if (hasActiveOrder) {
-      return { status: 'pending', label: 'Order Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
-    } else if (table.is_occupied) {
-      return { status: 'seated', label: 'Seated', color: 'bg-blue-100 text-blue-800 border-blue-200' }
-    } else {
-      return { status: 'available', label: 'Available', color: 'bg-green-100 text-green-800 border-green-200' }
-    }
-  }
-
-  // Available tables (not occupied or ready for new orders)
-  const availableTables = tables.filter(table => !table.is_occupied)
-  
-  // All tables with status for restaurant view
-  const tablesWithStatus = tables.map(table => {
-    const orders = Array.isArray(activeOrders) ? activeOrders : []
-    return {
-      ...table,
-      statusInfo: getTableStatus(table),
-      activeOrder: orders.find(order => order.table_id === table.id)
-    }
-  })
 
   const addToCart = (product: Product) => {
     const existingItem = cart.find(item => item.product.id === product.id)
@@ -204,11 +139,10 @@ export function ServerInterface() {
   }
 
   const handleCreateOrder = () => {
-    if (!selectedTable || cart.length === 0) return
+    if (cart.length === 0) return
 
     const orderData: CreateOrderRequest = {
-      order_type: 'dine_in',
-      table_id: selectedTable.id,
+      order_type: orderType,
       customer_name: customerName || undefined,
       items: cart.map(item => ({
         product_id: item.product.id,
@@ -237,23 +171,11 @@ export function ServerInterface() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
             <div className="min-w-0 flex-1">
               <h1 className="text-lg sm:text-xl lg:text-2xl font-bold flex items-center truncate">
-                <span className="hidden sm:inline">🍽️ Server Station</span>
-                <span className="sm:hidden">🍽️ Server</span>
+                <span className="hidden sm:inline">Server Station</span>
+                <span className="sm:hidden">Server</span>
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">Take orders for your tables • Provide excellent service</p>
-              <p className="text-xs text-muted-foreground mt-1 sm:hidden">Dine-in orders</p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                <span className="hidden sm:inline">Dine-In Service</span>
-                <span className="sm:hidden">Dine-In</span>
-              </Badge>
-              {Array.isArray(activeOrders) && activeOrders.length > 0 && (
-                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs px-2 py-1">
-                  {activeOrders.length} <span className="hidden sm:inline">Active Orders</span><span className="sm:hidden">Orders</span>
-                </Badge>
-              )}
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">Create takeout and delivery orders</p>
+              <p className="text-xs text-muted-foreground mt-1 sm:hidden">Takeout / Delivery</p>
             </div>
           </div>
 
@@ -380,165 +302,46 @@ export function ServerInterface() {
 
       {/* Right Sidebar - Cart and Order */}
       <div className="w-full lg:w-1/3 flex flex-col bg-card max-h-screen lg:max-h-none">
-        {/* Table Selection */}
+        {/* Order Type Selection */}
         <div className="p-3 sm:p-4 border-b border-border flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold flex items-center text-sm sm:text-base">
-              <TableIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Select Table</span>
-              <span className="sm:hidden">Table</span>
-            </h3>
-            <div className="flex gap-1">
-              <Button
-                variant={!showTableView ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowTableView(false)}
-                className="min-h-[36px] px-3 text-xs sm:text-sm sm:min-h-[44px] sm:px-4 touch-manipulation"
-              >
-                List
-              </Button>
-              <Button
-                variant={showTableView ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowTableView(true)}
-                className="min-h-[36px] px-3 text-xs sm:text-sm sm:min-h-[44px] sm:px-4 touch-manipulation"
-              >
-                Floor
-              </Button>
-            </div>
+          <h3 className="font-semibold mb-3 flex items-center text-sm sm:text-base">
+            Order Type
+          </h3>
+          <div className="flex gap-2">
+            <Button
+              variant={orderType === 'takeout' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setOrderType('takeout')}
+              className="flex-1 min-h-[44px] touch-manipulation"
+            >
+              <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              Takeout
+            </Button>
+            <Button
+              variant={orderType === 'delivery' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setOrderType('delivery')}
+              className="flex-1 min-h-[44px] touch-manipulation"
+            >
+              <Car className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              Delivery
+            </Button>
           </div>
-
-          {!showTableView ? (
-            // Simple List View - Only Available Tables
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {availableTables.slice(0, 9).map(table => (
-                  <Button
-                    key={table.id}
-                    variant={selectedTable?.id === table.id ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedTable(table)}
-                    className="h-12 sm:h-14 flex flex-col text-xs sm:text-sm min-h-[48px] touch-manipulation"
-                  >
-                    <span className="font-semibold">{table.table_number}</span>
-                    <span className="text-[10px] sm:text-xs opacity-75">{table.seating_capacity} seats</span>
-                  </Button>
-                ))}
-              </div>
-              {availableTables.length > 9 && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  +{availableTables.length - 9} more tables available
-                </p>
-              )}
-            </>
-          ) : (
-            // Restaurant Floor View - All Tables with Status
-            <div className="space-y-3">
-              {/* Status Legend */}
-              <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500 flex-shrink-0"></div>
-                  <span className="truncate">Available</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-500 flex-shrink-0"></div>
-                  <span className="truncate">Seated</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-500 flex-shrink-0"></div>
-                  <span className="truncate">Pending</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-500 flex-shrink-0"></div>
-                  <span className="truncate">Occupied</span>
-                </div>
-              </div>
-
-              {/* Table Grid */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 sm:max-h-48 overflow-y-auto">
-                {tablesWithStatus.map(table => {
-                  const canSelect = table.statusInfo.status === 'available' || table.statusInfo.status === 'seated'
-                  return (
-                    <Button
-                      key={table.id}
-                      onClick={() => canSelect && setSelectedTable(table)}
-                      disabled={!canSelect}
-                      className={`h-12 sm:h-14 flex flex-col p-1.5 sm:p-2 relative min-h-[48px] touch-manipulation ${
-                        canSelect ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
-                      } ${
-                        selectedTable?.id === table.id ? 'ring-2 ring-primary' : ''
-                      }`}
-                    >
-                      <div className="font-semibold text-xs sm:text-sm">T{table.table_number}</div>
-                      <div className="text-[10px] sm:text-xs">{table.seating_capacity} seats</div>
-                      
-                      {/* Status indicator */}
-                      <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
-                        table.statusInfo.status === 'available' ? 'bg-green-500' :
-                        table.statusInfo.status === 'seated' ? 'bg-blue-500' :
-                        table.statusInfo.status === 'pending' ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`} />
-                      
-                      {/* Active order indicator */}
-                      {table.activeOrder && (
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[9px] sm:text-[10px] bg-yellow-200 text-yellow-800 px-1 py-0.5 rounded truncate max-w-full">
-                          #{table.activeOrder.order_number?.slice(-4)}
-                        </div>
-                      )}
-                    </Button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Selected Table Info */}
-          {selectedTable && (
-            <div className="mt-3 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-xs sm:text-sm font-medium text-blue-900">
-                Selected: Table {selectedTable.table_number}
-              </div>
-              <div className="text-[10px] sm:text-xs text-blue-700">
-                {selectedTable.seating_capacity} seats • {selectedTable.location || 'Main floor'}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Guest Information */}
+        {/* Customer Information */}
         <div className="p-3 sm:p-4 border-b border-border flex-shrink-0">
           <h3 className="font-semibold mb-3 flex items-center text-sm sm:text-base">
             <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Guest Information</span>
-            <span className="sm:hidden">Guest Info</span>
+            <span className="hidden sm:inline">Customer Information</span>
+            <span className="sm:hidden">Customer</span>
           </h3>
           <Input
-            placeholder="Guest name (optional)"
+            placeholder="Customer name (optional)"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             className="h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
           />
-          <div className="text-xs text-muted-foreground mt-2 hidden sm:block">
-            💡 Tip: Adding guest names helps with personalized service
-          </div>
-        </div>
-
-        {/* Quick Server Actions */}
-        <div className="p-3 sm:p-4 border-b border-border flex-shrink-0">
-          <h3 className="font-semibold mb-3 text-xs sm:text-sm">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" className="h-8 sm:h-10 text-xs touch-manipulation min-h-[36px]">
-              <Settings className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">Table Settings</span>
-              <span className="sm:hidden">Settings</span>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 sm:h-10 text-xs touch-manipulation min-h-[36px]">
-              <Package className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">Specials</span>
-              <span className="sm:hidden">Specials</span>
-            </Button>
-          </div>
         </div>
 
         {/* Cart */}
@@ -554,12 +357,7 @@ export function ServerInterface() {
               <div className="text-center py-6 sm:py-8 text-muted-foreground">
                 <ShoppingCart className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 opacity-50" />
                 <p className="text-sm sm:text-base font-medium">Ready to take an order</p>
-                <p className="text-xs sm:text-sm mt-1">
-                  {selectedTable 
-                    ? `Table ${selectedTable.table_number}`
-                    : 'Select a table and add items'
-                  }
-                </p>
+                <p className="text-xs sm:text-sm mt-1">Add items from the menu to get started</p>
               </div>
             ) : (
               <div className="space-y-2 sm:space-y-3">
@@ -622,8 +420,8 @@ export function ServerInterface() {
               {/* Order Summary */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs sm:text-sm text-blue-700">
-                    {selectedTable ? `Table ${selectedTable.table_number}` : 'No table selected'}
+                  <span className="text-xs sm:text-sm text-blue-700 capitalize">
+                    {orderType}
                   </span>
                   <span className="text-xs sm:text-sm text-blue-700">
                     {cart.length} item{cart.length !== 1 ? 's' : ''}
@@ -640,19 +438,13 @@ export function ServerInterface() {
                 className="w-full min-h-[48px] sm:min-h-[52px] text-sm sm:text-base font-semibold touch-manipulation"
                 size="lg"
                 onClick={handleCreateOrder}
-                disabled={!selectedTable || cart.length === 0 || createOrderMutation.isPending}
+                disabled={cart.length === 0 || createOrderMutation.isPending}
               >
                 {createOrderMutation.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     <span className="hidden sm:inline">Sending to Kitchen...</span>
                     <span className="sm:hidden">Sending...</span>
-                  </>
-                ) : !selectedTable ? (
-                  <>
-                    <TableIcon className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">Select a Table First</span>
-                    <span className="sm:hidden">Select Table</span>
                   </>
                 ) : (
                   <>
@@ -662,20 +454,13 @@ export function ServerInterface() {
                   </>
                 )}
               </Button>
-
-              {/* Server Tips */}
-              <div className="text-xs text-center text-muted-foreground hidden sm:block">
-                💡 Double-check the order with guests before submitting
-              </div>
             </div>
           </div>
         ) : (
           <div className="p-3 sm:p-4 border-t border-border bg-card flex-shrink-0">
             <div className="text-center text-muted-foreground">
               <p className="text-sm sm:text-base font-medium">No items selected</p>
-              <p className="text-xs sm:text-sm mt-1">
-                {selectedTable ? 'Add items to start taking an order' : 'Select a table to begin'}
-              </p>
+              <p className="text-xs sm:text-sm mt-1">Add items to start taking an order</p>
             </div>
           </div>
         )}

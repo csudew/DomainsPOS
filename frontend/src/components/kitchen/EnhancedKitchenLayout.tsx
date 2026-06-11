@@ -85,6 +85,7 @@ export function EnhancedKitchenLayout({ user }: EnhancedKitchenLayoutProps) {
     confirmed: orders.filter((order: Order) => order.status === 'confirmed'),
     preparing: orders.filter((order: Order) => order.status === 'preparing'),
     ready: orders.filter((order: Order) => order.status === 'ready'),
+    completed: orders.filter((order: Order) => order.status === 'completed'),
   };
 
   // Calculate statistics
@@ -344,10 +345,31 @@ export function EnhancedKitchenLayout({ user }: EnhancedKitchenLayoutProps) {
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                      Ready for Service ({ordersByStatus.ready.length})
+                      Ready for Handover ({ordersByStatus.ready.length})
                     </h2>
                     <div className="grid gap-4 lg:grid-cols-2">
                       {ordersByStatus.ready.map((order: Order) => (
+                        <EnhancedKitchenOrderCard
+                          key={order.id}
+                          order={order}
+                          onStatusUpdate={handleOrderStatusUpdate}
+                          onItemStatusUpdate={handleOrderItemStatusUpdate}
+                          isMinimalistic={true}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Completed Orders Section */}
+                {ordersByStatus.completed.length > 0 && (
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      Completed ({ordersByStatus.completed.length})
+                    </h2>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      {ordersByStatus.completed.map((order: Order) => (
                         <EnhancedKitchenOrderCard
                           key={order.id}
                           order={order}

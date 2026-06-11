@@ -3,15 +3,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  X, 
-  Trash2, 
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  X,
+  Trash2,
   CreditCard,
-  Receipt,
-  MapPin
+  Receipt
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { PaymentConfirmationModal } from './PaymentConfirmationModal'
@@ -23,7 +22,7 @@ interface OrderCartProps {
   taxAmount: number
   totalAmount: number
   selectedTable: DiningTable | null
-  orderType: 'dine_in' | 'takeout' | 'delivery'
+  orderType: 'takeout' | 'delivery'
   customerName: string
   onUpdateQuantity: (productId: string, quantity: number) => void
   onRemoveItem: (productId: string) => void
@@ -51,12 +50,7 @@ export function OrderCart({
       return
     }
 
-    if (orderType === 'dine_in' && !selectedTable) {
-      alert('Please select a table for dine-in orders')
-      return
-    }
-
-    if (orderType !== 'dine_in' && !customerName.trim()) {
+    if (!customerName.trim()) {
       alert(`Please enter customer ${orderType === 'delivery' ? 'address' : 'name'}`)
       return
     }
@@ -71,9 +65,7 @@ export function OrderCart({
     setShowPaymentModal(false)
   }
 
-  const canProceedToPayment = items.length > 0 && 
-    (orderType !== 'dine_in' || selectedTable) && 
-    (orderType === 'dine_in' || customerName.trim())
+  const canProceedToPayment = items.length > 0 && customerName.trim()
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -98,17 +90,11 @@ export function OrderCart({
       </div>
 
       {/* Order Info */}
-      {(selectedTable || customerName || orderType !== 'dine_in') && (
+      {(customerName || orderType) && (
         <div className="p-4 bg-gray-50 border-b border-gray-200">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge className="capitalize">{orderType.replace('_', ' ')}</Badge>
-              {selectedTable && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  Table {selectedTable.table_number}
-                </Badge>
-              )}
             </div>
             {customerName && (
               <p className="text-sm text-gray-600">
@@ -244,8 +230,7 @@ export function OrderCart({
 
           {!canProceedToPayment && items.length > 0 && (
             <p className="text-xs text-red-600 mt-2 text-center">
-              {orderType === 'dine_in' && !selectedTable && 'Please select a table'}
-              {orderType !== 'dine_in' && !customerName.trim() && `Please enter customer ${orderType === 'delivery' ? 'address' : 'name'}`}
+              {!customerName.trim() && `Please enter customer ${orderType === 'delivery' ? 'address' : 'name'}`}
             </p>
           )}
         </div>

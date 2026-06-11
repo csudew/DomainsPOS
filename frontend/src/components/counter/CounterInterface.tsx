@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,15 +13,12 @@ import {
   DollarSign,
   Check,
   Clock,
-  Table as TableIcon,
   Search,
   Package,
   Car,
-  Users,
-  Receipt,
-  History
+  Receipt
 } from 'lucide-react'
-import type { Product, Category, DiningTable, Order } from '@/types'
+import type { Product, Order } from '@/types'
 
 interface CartItem {
   product: Product
@@ -30,9 +27,8 @@ interface CartItem {
 }
 
 interface CreateOrderRequest {
-  table_id?: string
   customer_name?: string
-  order_type: 'dine_in' | 'takeout' | 'delivery'
+  order_type: 'takeout' | 'delivery'
   items: Array<{
     product_id: string
     quantity: number
@@ -49,9 +45,8 @@ interface ProcessPaymentRequest {
 
 export function CounterInterface() {
   const [activeTab, setActiveTab] = useState<'create' | 'payment'>('create')
-  const [orderType, setOrderType] = useState<'dine_in' | 'takeout' | 'delivery'>('dine_in')
+  const [orderType, setOrderType] = useState<'takeout' | 'delivery'>('takeout')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedTable, setSelectedTable] = useState<DiningTable | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [orderNotes, setOrderNotes] = useState('')
@@ -83,12 +78,6 @@ export function CounterInterface() {
     }
   })
 
-  // Fetch available tables 
-  const { data: tables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: () => apiClient.getTables().then(res => res.data)
-  })
-
   // Fetch pending orders for payment processing
   const { data: pendingOrders = [] } = useQuery({
     queryKey: ['pendingOrders'],
@@ -102,11 +91,9 @@ export function CounterInterface() {
     onSuccess: () => {
       // Reset form
       setCart([])
-      setSelectedTable(null)
       setCustomerName('')
       setOrderNotes('')
       queryClient.invalidateQueries({ queryKey: ['orders'] })
-      queryClient.invalidateQueries({ queryKey: ['tables'] })
     }
   })
 
@@ -129,9 +116,6 @@ export function CounterInterface() {
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   )
-
-  // Available tables (for dine-in)
-  const availableTables = tables.filter(table => !table.is_occupied)
 
   const addToCart = (product: Product) => {
     const existingItem = cart.find(item => item.product.id === product.id)
@@ -167,10 +151,8 @@ export function CounterInterface() {
 
   const handleCreateOrder = () => {
     if (cart.length === 0) return
-    if (orderType === 'dine_in' && !selectedTable) return
 
     const orderData: CreateOrderRequest = {
-      table_id: orderType === 'dine_in' ? selectedTable?.id : undefined,
       customer_name: customerName || undefined,
       order_type: orderType,
       items: cart.map(item => ({
@@ -208,7 +190,6 @@ export function CounterInterface() {
 
   const getOrderTypeIcon = (type: string) => {
     switch (type) {
-      case 'dine_in': return <Users className="w-4 h-4" />
       case 'takeout': return <Package className="w-4 h-4" />
       case 'delivery': return <Car className="w-4 h-4" />
       default: return <ShoppingCart className="w-4 h-4" />
@@ -217,11 +198,10 @@ export function CounterInterface() {
 
   const getOrderTypeBadge = (type: string) => {
     const configs = {
-      dine_in: { label: 'Dine-In', color: 'bg-blue-100 text-blue-800' },
       takeout: { label: 'Takeout', color: 'bg-green-100 text-green-800' },
       delivery: { label: 'Delivery', color: 'bg-purple-100 text-purple-800' }
     }
-    const config = configs[type as keyof typeof configs] || configs.dine_in
+    const config = configs[type as keyof typeof configs] || configs.takeout
     return <Badge className={config.color}>{config.label}</Badge>
   }
 
@@ -260,14 +240,6 @@ export function CounterInterface() {
             <>
               {/* Order Type Selection */}
               <div className="flex gap-2 mb-4">
-                <Button
-                  variant={orderType === 'dine_in' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setOrderType('dine_in')}
-                >
-                  <Users className="w-4 h-4 mr-1" />
-                  Dine-In
-                </Button>
                 <Button
                   variant={orderType === 'takeout' ? 'default' : 'outline'}
                   size="sm"
@@ -431,7 +403,6 @@ export function CounterInterface() {
                             <div className="font-semibold">Order #{order.order_number}</div>
                             <div className="text-sm text-muted-foreground">
                               {order.customer_name && `${order.customer_name} • `}
-                              {order.table?.table_number && `Table ${order.table.table_number} • `}
                               {order.items?.length || 0} items
                             </div>
                           </div>
@@ -460,39 +431,11 @@ export function CounterInterface() {
         {activeTab === 'create' ? (
           /* Create Order Interface */
           <>
-            {/* Table/Customer Selection */}
+            {/* Customer Information */}
             <div className="p-4 border-b border-border">
-              {orderType === 'dine_in' ? (
-                <>
-                  <h3 className="font-semibold mb-3 flex items-center">
-                    <TableIcon className="w-4 h-4 mr-2" />
-                    Select Table
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    {availableTables.slice(0, 9).map(table => (
-                      <Button
-                        key={table.id}
-                        variant={selectedTable?.id === table.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedTable(table)}
-                        className="h-12"
-                      >
-                        {table.table_number}
-                        <span className="text-xs block">
-                          {table.seating_capacity} seats
-                        </span>
-                      </Button>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Customer Information</h3>
-                </div>
-              )}
-              
+              <h3 className="font-semibold mb-2">Customer Information</h3>
               <Input
-                placeholder={orderType === 'dine_in' ? 'Customer name (optional)' : 'Customer name'}
+                placeholder="Customer name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
               />
@@ -577,11 +520,7 @@ export function CounterInterface() {
                     className="w-full"
                     size="lg"
                     onClick={handleCreateOrder}
-                    disabled={
-                      cart.length === 0 || 
-                      (orderType === 'dine_in' && !selectedTable) ||
-                      createOrderMutation.isPending
-                    }
+                    disabled={cart.length === 0 || createOrderMutation.isPending}
                   >
                     {createOrderMutation.isPending ? (
                       <>
@@ -591,7 +530,7 @@ export function CounterInterface() {
                     ) : (
                       <>
                         <Check className="w-4 h-4 mr-2" />
-                        Create {orderType === 'dine_in' ? 'Dine-In' : orderType === 'takeout' ? 'Takeout' : 'Delivery'} Order
+                        Create {orderType === 'takeout' ? 'Takeout' : 'Delivery'} Order
                       </>
                     )}
                   </Button>

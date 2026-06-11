@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, BellRing, CheckCircle, Clock, MapPin, User, Package } from 'lucide-react';
+import { Bell, BellRing, CheckCircle, Clock, User, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { kitchenSoundService } from '@/services/soundService';
 import apiClient from '@/api/client';
@@ -70,13 +70,13 @@ export function ReadyOrdersNotification({
     setPreviousReadyOrders(currentReadyIds);
   }, [orders, previousReadyOrders, soundPlayed]);
 
-  // Handle order served
+  // Handle order completed (hand over)
   const handleOrderServed = useCallback(async (orderId: string) => {
     try {
-      await apiClient.updateOrderStatus(orderId, 'served');
+      await apiClient.updateOrderStatus(orderId, 'completed');
       refetch();
       onOrderServed?.(orderId);
-      
+
       // Remove from sound played set
       setSoundPlayed(prev => {
         const newSet = new Set(prev);
@@ -84,7 +84,7 @@ export function ReadyOrdersNotification({
         return newSet;
       });
     } catch (error) {
-      console.error('Failed to mark order as served:', error);
+      console.error('Failed to complete order:', error);
     }
   }, [refetch, onOrderServed]);
 
@@ -121,7 +121,7 @@ export function ReadyOrdersNotification({
             ) : (
               <Bell className="h-5 w-5 text-green-600" />
             )}
-            <span>Ready for Pickup ({orders.length})</span>
+            <span>Ready for Handover ({orders.length})</span>
             {newOrders.length > 0 && (
               <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
                 {newOrders.length} New!
@@ -187,16 +187,16 @@ function ReadyOrderCard({ order, onServed }: ReadyOrderCardProps) {
           <div>
             <h3 className="font-semibold text-lg">#{order.order_number}</h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-              {order.order_type === 'dine_in' && order.table && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Table {order.table.table_number}
-                </span>
-              )}
               {order.order_type === 'takeout' && (
                 <span className="flex items-center gap-1">
                   <Package className="h-3 w-3" />
                   Takeaway
+                </span>
+              )}
+              {order.order_type === 'delivery' && (
+                <span className="flex items-center gap-1">
+                  <Package className="h-3 w-3" />
+                  Delivery
                 </span>
               )}
               {order.customer_name && (
@@ -253,13 +253,13 @@ function ReadyOrderCard({ order, onServed }: ReadyOrderCardProps) {
           size="sm"
           className={cn(
             "w-full",
-            urgency.level === 'critical' 
+            urgency.level === 'critical'
               ? "bg-red-600 hover:bg-red-700"
               : "bg-green-600 hover:bg-green-700"
           )}
         >
           <CheckCircle className="h-4 w-4 mr-2" />
-          Mark as Served
+          Hand Over / Complete
         </Button>
       </CardContent>
     </Card>

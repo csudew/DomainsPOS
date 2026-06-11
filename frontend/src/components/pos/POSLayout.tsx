@@ -19,7 +19,7 @@ export function POSLayout({ user }: POSLayoutProps) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedTable, setSelectedTable] = useState<DiningTable | null>(null)
   const [showTableModal, setShowTableModal] = useState(false)
-  const [orderType, setOrderType] = useState<'dine_in' | 'takeout' | 'delivery'>('dine_in')
+  const [orderType, setOrderType] = useState<'takeout' | 'delivery'>('takeout')
   const [customerName, setCustomerName] = useState('')
   
   // Enhanced POS features - temporarily disabled for debugging
@@ -133,11 +133,9 @@ export function POSLayout({ user }: POSLayoutProps) {
   const totalAmount = subtotal + taxAmount
 
   // Handle order type change
-  const handleOrderTypeChange = (type: 'dine_in' | 'takeout' | 'delivery') => {
+  const handleOrderTypeChange = (type: 'takeout' | 'delivery') => {
     setOrderType(type)
-    if (type !== 'dine_in') {
-      setSelectedTable(null)
-    }
+    setSelectedTable(null)
   }
 
   return (

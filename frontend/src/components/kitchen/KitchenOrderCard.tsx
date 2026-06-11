@@ -50,8 +50,8 @@ export function KitchenOrderCard({ order, onStatusUpdate, onItemStatusUpdate }: 
           color: 'bg-green-500',
           textColor: 'text-green-700',
           bgColor: 'bg-green-50',
-          nextAction: 'Mark Served',
-          nextStatus: 'served'
+          nextAction: 'Hand Over / Complete',
+          nextStatus: 'completed'
         }
       default:
         return {

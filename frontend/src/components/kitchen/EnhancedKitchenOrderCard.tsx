@@ -146,7 +146,7 @@ export function EnhancedKitchenOrderCard({
           disabled: progressPercentage < 100
         };
       case 'ready':
-        return { label: 'Mark Served', status: 'served', icon: <CheckCircle className="h-4 w-4" /> };
+        return { label: 'Hand Over / Complete', status: 'completed', icon: <CheckCircle className="h-4 w-4" /> };
       default:
         return null;
     }
@@ -271,7 +271,7 @@ export function EnhancedKitchenOrderCard({
               </Badge>
               {order.status === 'preparing' && progressPercentage === 100 && (
                 <Badge variant="outline" className="text-green-600 border-green-600">
-                  Ready to serve
+                  Ready to hand over
                 </Badge>
               )}
             </div>

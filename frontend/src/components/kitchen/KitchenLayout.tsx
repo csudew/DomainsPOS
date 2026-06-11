@@ -40,7 +40,8 @@ export function KitchenLayout({ user }: KitchenLayoutProps) {
   const ordersByStatus = {
     confirmed: filteredOrders.filter((order: Order) => order.status === 'confirmed'),
     preparing: filteredOrders.filter((order: Order) => order.status === 'preparing'),
-    ready: filteredOrders.filter((order: Order) => order.status === 'ready')
+    ready: filteredOrders.filter((order: Order) => order.status === 'ready'),
+    completed: filteredOrders.filter((order: Order) => order.status === 'completed'),
   }
 
   // Handle order status update
@@ -92,7 +93,8 @@ export function KitchenLayout({ user }: KitchenLayoutProps) {
             all: orders.length,
             confirmed: ordersByStatus.confirmed.length,
             preparing: ordersByStatus.preparing.length,
-            ready: ordersByStatus.ready.length
+            ready: ordersByStatus.ready.length,
+            completed: ordersByStatus.completed.length,
           }}
         />
       </div>
@@ -168,10 +170,30 @@ export function KitchenLayout({ user }: KitchenLayoutProps) {
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                   <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  Ready for Service ({ordersByStatus.ready.length})
+                  Ready for Handover ({ordersByStatus.ready.length})
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {ordersByStatus.ready.map((order: Order) => (
+                    <KitchenOrderCard
+                      key={order.id}
+                      order={order}
+                      onStatusUpdate={handleOrderStatusUpdate}
+                      onItemStatusUpdate={handleOrderItemStatusUpdate}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Completed Orders */}
+            {ordersByStatus.completed.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                  Completed ({ordersByStatus.completed.length})
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {ordersByStatus.completed.map((order: Order) => (
                     <KitchenOrderCard
                       key={order.id}
                       order={order}

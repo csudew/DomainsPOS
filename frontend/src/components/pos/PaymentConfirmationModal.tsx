@@ -32,7 +32,7 @@ interface PaymentConfirmationModalProps {
   taxAmount: number
   totalAmount: number
   selectedTable: DiningTable | null
-  orderType: 'dine_in' | 'takeout' | 'delivery'
+  orderType: 'takeout' | 'delivery'
   customerName: string
   orderNotes?: string
   onSuccess: () => void
@@ -84,8 +84,7 @@ export function PaymentConfirmationModal({
       }))
 
       const orderData: CreateOrderRequest = {
-        table_id: selectedTable?.id,
-        customer_name: orderType !== 'dine_in' ? customerName.trim() : undefined,
+        customer_name: customerName.trim() || undefined,
         order_type: orderType,
         items: orderItems,
         notes: orderNotes?.trim() || undefined

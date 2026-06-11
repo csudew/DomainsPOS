@@ -41,9 +41,8 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
   const orders = ordersResponse || [];
 
   // Filter orders to only show kitchen-relevant statuses
-  // Orders disappear when served/completed by server staff
-  const kitchenRelevantOrders = orders.filter((order: Order) => 
-    ['confirmed', 'preparing', 'ready'].includes(order.status)
+  const kitchenRelevantOrders = orders.filter((order: Order) =>
+    ['confirmed', 'preparing', 'ready', 'completed'].includes(order.status)
   );
 
   // Group orders by status
@@ -51,6 +50,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
     confirmed: kitchenRelevantOrders.filter((order: Order) => order.status === 'confirmed'),
     preparing: kitchenRelevantOrders.filter((order: Order) => order.status === 'preparing'),
     ready: kitchenRelevantOrders.filter((order: Order) => order.status === 'ready'),
+    completed: kitchenRelevantOrders.filter((order: Order) => order.status === 'completed'),
   };
 
   // Calculate statistics based on kitchen-relevant orders only
@@ -93,11 +93,11 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
     }
   };
 
-  // Handle individual item serving (as-ready service)
+  // Handle individual item completion
   const handleItemServe = async (orderId: string, itemId: string, itemName: string) => {
     try {
-      // Mark item as served
-      await apiClient.updateOrderItemStatus(orderId, itemId, 'served');
+      // Mark item as completed
+      await apiClient.updateOrderItemStatus(orderId, itemId, 'completed');
       
       // Play notification sound
       if (soundEnabled) {
@@ -208,11 +208,11 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
       }
     ];
 
-    // Calculate progress including served items
+    // Calculate progress including completed items
     const totalItems = displayItems.length;
     const readyItems = checkedItems.size;
-    const servedItems = displayItems.filter(item => item.status === 'served').length;
-    const progress = totalItems > 0 ? ((readyItems + servedItems) / totalItems) * 100 : 0;
+    const completedItems = displayItems.filter(item => item.status === 'completed').length;
+    const progress = totalItems > 0 ? ((readyItems + completedItems) / totalItems) * 100 : 0;
 
     return (
       <Card className={cn("w-full max-w-lg mx-auto min-h-[500px]", getUrgencyColor())}>
@@ -252,7 +252,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
             />
           </div>
           <div className="text-sm text-muted-foreground mt-2 font-medium">
-            {readyItems} ready • {servedItems} served • {totalItems - readyItems - servedItems} cooking ({Math.round(progress)}% complete)
+            {readyItems} ready • {completedItems} completed • {totalItems - readyItems - completedItems} cooking ({Math.round(progress)}% complete)
           </div>
         </CardHeader>
         
@@ -265,7 +265,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
             </h4>
             
             {displayItems.map((item, index) => {
-              const isServed = item.status === 'served';
+              const isServed = item.status === 'completed';
               const isReady = checkedItems.has(item.id);
               
               return (
@@ -294,7 +294,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
                     isServed ? "line-through text-gray-500" : isReady && "line-through text-muted-foreground"
                   )}>
                     {item.quantity}x {item.product?.name || `Item ${index + 1}`}
-                    {isServed && <span className="ml-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">SERVED</span>}
+                    {isServed && <span className="ml-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">COMPLETED</span>}
                   </div>
                   
                   {item.special_instructions && (
@@ -312,7 +312,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
                           ? "bg-green-100 text-green-800" 
                           : "bg-orange-100 text-orange-800"
                     )}>
-                      {isServed ? '🍽️ Served' : isReady ? '✅ Ready' : '🍳 Cooking'}
+                      {isServed ? '✅ Completed' : isReady ? '✅ Ready' : '🍳 Cooking'}
                     </div>
                     
                     {/* Individual Item Serve Button */}
@@ -403,14 +403,14 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
             )}
             
             {order.status === 'ready' && (
-              <div className="flex-1 bg-green-100 border-2 border-green-500 rounded-lg p-3 text-center">
-                <div className="text-green-800 font-bold text-lg">
-                  🎉 Order Complete!
-                </div>
-                <div className="text-green-600 text-sm">
-                  Ready for pickup/serving
-                </div>
-              </div>
+              <Button
+                onClick={() => handleOrderStatusUpdate(order.id, 'completed')}
+                className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg"
+                size="lg"
+              >
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Hand Over / Complete
+              </Button>
             )}
           </div>
         </CardContent>
@@ -420,9 +420,9 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
 
   // Takeaway Board Component
   const TakeawayBoard = () => {
-    // Only show takeaway orders that are ready but not yet served/completed
-    const takeawayOrders = kitchenRelevantOrders.filter(order => 
-      order.order_type === 'takeout' && order.status === 'ready'
+    // Only show takeaway orders that are ready but not yet completed
+    const takeawayOrders = kitchenRelevantOrders.filter(order =>
+      (order.order_type === 'takeout' || order.order_type === 'delivery') && order.status === 'ready'
     );
 
     if (takeawayOrders.length === 0) {

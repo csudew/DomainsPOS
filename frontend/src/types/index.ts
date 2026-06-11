@@ -116,7 +116,7 @@ export interface OrderItem {
   unit_price: number;
   total_price: number;
   special_instructions?: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served';
+  status: 'pending' | 'preparing' | 'ready' | 'served' | 'completed';
   created_at: string;
   updated_at: string;
   product?: Product;
