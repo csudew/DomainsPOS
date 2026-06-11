@@ -361,6 +361,11 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// Award loyalty points if customer phone was provided
+	if req.CustomerPhone != nil && *req.CustomerPhone != "" {
+		go EarnLoyaltyPoints(h.db, *req.CustomerPhone, orderID, totalAmount)
+	}
+
 	// Fetch and return the created order
 	order, err := h.getOrderByID(orderID)
 	if err != nil {

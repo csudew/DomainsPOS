@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { UserMenu } from '@/components/ui/user-menu'
 // import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card' // Removed - not used in simplified layout
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   CreditCard,
   ChefHat,
   ShoppingCart,
@@ -13,7 +13,8 @@ import {
   Menu,
   BarChart3,
   UserCog,
-  Store
+  Store,
+  Crown
 } from 'lucide-react'
 import type { User as UserType } from '@/types'
 import apiClient from '@/api/client'
@@ -29,6 +30,7 @@ import { AdminStaffManagement } from './AdminStaffManagement'
 import { AdminSettings } from './AdminSettings'
 import { AdminMenuManagement } from './AdminMenuManagement'
 import { AdminReports } from './AdminReports'
+import { AdminLoyalty } from './AdminLoyalty'
 
 interface AdminLayoutProps {
   user: UserType
@@ -77,6 +79,12 @@ const adminSections = [
     label: 'View Reports',
     icon: <BarChart3 className="w-5 h-5" />,
     description: 'Sales and analytics'
+  },
+  {
+    id: 'loyalty',
+    label: 'Loyalty Program',
+    icon: <Crown className="w-5 h-5" />,
+    description: 'Tiers and member rewards'
   }
 ]
 
@@ -126,6 +134,8 @@ export function AdminLayout({ user }: AdminLayoutProps) {
         return <AdminMenuManagement />
       case 'reports':
         return <AdminReports />
+      case 'loyalty':
+        return <AdminLoyalty />
       default:
         return <AdminDashboard />
     }

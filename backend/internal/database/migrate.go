@@ -13,6 +13,9 @@ var schemaSQL string
 //go:embed migrations/02_seed.sql
 var seedSQL string
 
+//go:embed migrations/03_loyalty.sql
+var loyaltySQL string
+
 func RunMigrations(db *sql.DB) error {
 	log.Println("Running database migrations...")
 
@@ -25,6 +28,11 @@ func RunMigrations(db *sql.DB) error {
 		return fmt.Errorf("seed migration failed: %w", err)
 	}
 	log.Println("Seed migration completed")
+
+	if _, err := db.Exec(loyaltySQL); err != nil {
+		return fmt.Errorf("loyalty migration failed: %w", err)
+	}
+	log.Println("Loyalty migration completed")
 
 	return nil
 }

@@ -260,3 +260,44 @@ export interface TableFilters {
   available_only?: boolean;
 }
 
+// Loyalty Types
+export interface LoyaltyTier {
+  id: string;
+  name: string;
+  min_points: number;
+  discount_percent: number;
+  points_per_dollar: number;
+  color: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyCustomer {
+  id: string;
+  phone: string;
+  name?: string;
+  total_points: number;
+  lifetime_spent: number;
+  tier_id?: string;
+  tier?: LoyaltyTier;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyStats {
+  total_members: number;
+  total_points_issued: number;
+  total_spent: number;
+  tiers: Array<{ name: string; color: string; member_count: number }>;
+}
+
+export interface CreateLoyaltyTierRequest {
+  name: string;
+  min_points: number;
+  discount_percent: number;
+  points_per_dollar: number;
+  color: string;
+  sort_order: number;
+}
+

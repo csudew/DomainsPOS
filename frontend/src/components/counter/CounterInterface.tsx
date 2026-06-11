@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
+import type { LoyaltyCustomer } from '@/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +42,7 @@ export function CounterInterface() {
   const [readyNotification, setReadyNotification] = useState(0)
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null)
 
+  const [loyaltyPhone, setLoyaltyPhone] = useState('')
   const prevReadyCountRef = useRef(0)
   const queryClient = useQueryClient()
 
@@ -56,6 +58,20 @@ export function CounterInterface() {
         ? apiClient.getProducts().then(res => res.data)
         : apiClient.getProductsByCategory(selectedCategory).then(res => res.data),
   })
+
+  // Debounced phone lookup for loyalty
+  useEffect(() => {
+    const timer = setTimeout(() => setLoyaltyPhone(customerPhone), 600)
+    return () => clearTimeout(timer)
+  }, [customerPhone])
+
+  const { data: loyaltyRes } = useQuery({
+    queryKey: ['loyaltyCustomer', loyaltyPhone],
+    queryFn: () => apiClient.getLoyaltyCustomerByPhone(loyaltyPhone),
+    enabled: loyaltyPhone.length >= 7,
+    retry: false,
+  })
+  const loyaltyCustomer: LoyaltyCustomer | null = loyaltyRes?.success ? loyaltyRes.data ?? null : null
 
   // Poll all active orders every 5 seconds
   const { data: activeOrders = [], refetch: refetchActive } = useQuery({
@@ -100,8 +116,10 @@ export function CounterInterface() {
       setOrderSuccess(`Order #${orderNumber} created and payment processed`)
       setCart([])
       setCustomerPhone('')
+      setLoyaltyPhone('')
       setOrderNotes('')
       queryClient.invalidateQueries({ queryKey: ['activeOrders'] })
+      queryClient.invalidateQueries({ queryKey: ['loyaltyCustomer'] })
       setTimeout(() => setOrderSuccess(null), 4000)
     },
   })
@@ -392,6 +410,27 @@ export function CounterInterface() {
             value={customerPhone}
             onChange={e => setCustomerPhone(e.target.value)}
           />
+          {loyaltyPhone.length >= 7 && loyaltyCustomer && (
+            <div
+              className="mt-2 rounded-lg p-2.5 text-sm flex items-center gap-2"
+              style={{ backgroundColor: (loyaltyCustomer.tier?.color ?? '#6B7280') + '18', borderLeft: `3px solid ${loyaltyCustomer.tier?.color ?? '#6B7280'}` }}
+            >
+              <div className="flex-1">
+                <div className="font-medium" style={{ color: loyaltyCustomer.tier?.color ?? '#6B7280' }}>
+                  {loyaltyCustomer.tier?.name ?? 'Member'}
+                </div>
+                <div className="text-muted-foreground text-xs">
+                  {loyaltyCustomer.total_points.toLocaleString()} pts
+                  {loyaltyCustomer.tier && loyaltyCustomer.tier.discount_percent > 0 && (
+                    <span className="ml-2 font-medium text-green-700">· {loyaltyCustomer.tier.discount_percent}% discount</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {loyaltyPhone.length >= 7 && !loyaltyCustomer && (
+            <p className="mt-1 text-xs text-muted-foreground">New customer — will earn points on first order</p>
+          )}
         </div>
 
         {/* Cart */}

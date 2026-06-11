@@ -23,6 +23,10 @@ import type {
   OrderFilters,
   ProductFilters,
   TableFilters,
+  LoyaltyTier,
+  LoyaltyCustomer,
+  LoyaltyStats,
+  CreateLoyaltyTierRequest,
 } from '@/types';
 
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled';
@@ -454,6 +458,42 @@ class APIClient {
 
   async deleteTable(id: string): Promise<APIResponse> {
     return this.request({ method: 'DELETE', url: `/admin/tables/${id}` });
+  }
+
+  // Loyalty methods
+  async getLoyaltyTiers(): Promise<APIResponse<LoyaltyTier[]>> {
+    return this.request({ method: 'GET', url: '/loyalty/tiers' });
+  }
+
+  async createLoyaltyTier(data: CreateLoyaltyTierRequest): Promise<APIResponse<LoyaltyTier>> {
+    return this.request({ method: 'POST', url: '/admin/loyalty/tiers', data });
+  }
+
+  async updateLoyaltyTier(id: string, data: CreateLoyaltyTierRequest): Promise<APIResponse<LoyaltyTier>> {
+    return this.request({ method: 'PUT', url: `/admin/loyalty/tiers/${id}`, data });
+  }
+
+  async deleteLoyaltyTier(id: string): Promise<APIResponse> {
+    return this.request({ method: 'DELETE', url: `/admin/loyalty/tiers/${id}` });
+  }
+
+  async getLoyaltyCustomers(params?: { page?: number; search?: string }): Promise<PaginatedResponse<LoyaltyCustomer[]>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.search) query.set('search', params.search);
+    return this.request({ method: 'GET', url: `/admin/loyalty/customers?${query}` });
+  }
+
+  async getLoyaltyCustomerByPhone(phone: string): Promise<APIResponse<LoyaltyCustomer>> {
+    return this.request({ method: 'GET', url: `/loyalty/customer/${encodeURIComponent(phone)}` });
+  }
+
+  async getLoyaltyStats(): Promise<APIResponse<LoyaltyStats>> {
+    return this.request({ method: 'GET', url: '/admin/loyalty/stats' });
+  }
+
+  async adjustLoyaltyPoints(phone: string, points: number, description?: string): Promise<APIResponse> {
+    return this.request({ method: 'POST', url: `/admin/loyalty/customers/${encodeURIComponent(phone)}/adjust`, data: { points, description } });
   }
 
   // Utility methods

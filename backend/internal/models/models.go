@@ -208,3 +208,40 @@ type MetaData struct {
 	Total       int `json:"total"`
 	TotalPages  int `json:"total_pages"`
 }
+
+// LoyaltyTier represents a loyalty program tier level
+type LoyaltyTier struct {
+	ID              uuid.UUID `json:"id"`
+	Name            string    `json:"name"`
+	MinPoints       int       `json:"min_points"`
+	DiscountPercent float64   `json:"discount_percent"`
+	PointsPerDollar float64   `json:"points_per_dollar"`
+	Color           string    `json:"color"`
+	SortOrder       int       `json:"sort_order"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// LoyaltyCustomer represents a loyalty program member
+type LoyaltyCustomer struct {
+	ID            uuid.UUID    `json:"id"`
+	Phone         string       `json:"phone"`
+	Name          *string      `json:"name"`
+	TotalPoints   int          `json:"total_points"`
+	LifetimeSpent float64      `json:"lifetime_spent"`
+	TierID        *uuid.UUID   `json:"tier_id"`
+	Tier          *LoyaltyTier `json:"tier,omitempty"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+}
+
+// LoyaltyTransaction records a points earn/redeem event
+type LoyaltyTransaction struct {
+	ID              uuid.UUID  `json:"id"`
+	CustomerID      uuid.UUID  `json:"customer_id"`
+	OrderID         *uuid.UUID `json:"order_id"`
+	Points          int        `json:"points"`
+	TransactionType string     `json:"transaction_type"`
+	Description     *string    `json:"description"`
+	CreatedAt       time.Time  `json:"created_at"`
+}

@@ -85,3 +85,5 @@ files/
 # Temporary files
 *.tmp
 *.temp
+.vercel
+.env*

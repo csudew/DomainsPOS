@@ -25,6 +25,7 @@ func SetupRoutes(router *gin.RouterGroup, db *sql.DB, authMiddleware gin.Handler
 	productHandler := handlers.NewProductHandler(db)
 	paymentHandler := handlers.NewPaymentHandler(db)
 	tableHandler := handlers.NewTableHandler(db)
+	loyaltyHandler := handlers.NewLoyaltyHandler(db)
 
 	// Public routes (no authentication required)
 	public := router.Group("/")
@@ -61,6 +62,10 @@ func SetupRoutes(router *gin.RouterGroup, db *sql.DB, authMiddleware gin.Handler
 		// Payment routes (counter/admin only)
 		protected.GET("/orders/:id/payments", paymentHandler.GetPayments)
 		protected.GET("/orders/:id/payment-summary", paymentHandler.GetPaymentSummary)
+
+		// Loyalty customer lookup (all authenticated roles — used by counter)
+		protected.GET("/loyalty/customer/:phone", loyaltyHandler.GetCustomerByPhone)
+		protected.GET("/loyalty/tiers", loyaltyHandler.GetTiers)
 	}
 
 	// Server routes (server role - takeout/delivery orders)
@@ -116,6 +121,15 @@ func SetupRoutes(router *gin.RouterGroup, db *sql.DB, authMiddleware gin.Handler
 		// Advanced order management
 		admin.POST("/orders", orderHandler.CreateOrder)                   // Admins can create any type of order
 		admin.POST("/orders/:id/payments", paymentHandler.ProcessPayment) // Admins can process payments
+
+		// Loyalty program management
+		admin.GET("/loyalty/tiers", loyaltyHandler.GetTiers)
+		admin.POST("/loyalty/tiers", loyaltyHandler.CreateTier)
+		admin.PUT("/loyalty/tiers/:id", loyaltyHandler.UpdateTier)
+		admin.DELETE("/loyalty/tiers/:id", loyaltyHandler.DeleteTier)
+		admin.GET("/loyalty/customers", loyaltyHandler.GetCustomers)
+		admin.POST("/loyalty/customers/:phone/adjust", loyaltyHandler.AdjustPoints)
+		admin.GET("/loyalty/stats", loyaltyHandler.GetStats)
 	}
 
 	// Kitchen routes (kitchen staff access)
