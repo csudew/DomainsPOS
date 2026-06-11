@@ -1,4 +1,5 @@
 import type { Order, LoyaltyCustomer } from '@/types'
+import { printerConnected, printEscPos } from './thermalPrinter'
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash:           'Cash',
@@ -8,7 +9,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+  new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(n)
 
 function buildHtml(
   order: Order,
@@ -151,19 +152,29 @@ function escHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+/**
+ * Print a receipt.
+ * - If a thermal printer is connected via Web Serial → sends ESC/POS bytes (no dialog).
+ * - Otherwise → CSS iframe fallback (browser print dialog).
+ */
 export function printReceipt(
   order: Order,
   paymentMethod: string,
   loyaltyCustomer: LoyaltyCustomer | null = null,
 ): void {
-  // Estimate points earned from this order (server calculates the same way)
+  if (printerConnected()) {
+    // Direct ESC/POS — no dialog
+    printEscPos(order, paymentMethod, loyaltyCustomer).catch(console.error)
+    return
+  }
+
+  // ── CSS / iframe fallback (shows browser print dialog) ──────────────────────
   const rate = loyaltyCustomer?.tier?.points_per_dollar ?? 1.0
   const pointsEarned = order.customer_phone
     ? Math.floor(order.total_amount * rate)
     : 0
 
   const html = buildHtml(order, paymentMethod, loyaltyCustomer, pointsEarned)
-
   const iframe = document.createElement('iframe')
   iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;'
   document.body.appendChild(iframe)
@@ -175,17 +186,13 @@ export function printReceipt(
   win.document.write(html)
   win.document.close()
 
-  // Small delay to let the browser render before printing
   setTimeout(() => {
     win.focus()
     win.print()
   }, 250)
 
-  // Clean up after print dialog closes (or after 30s fallback)
   const cleanup = () => {
-    if (document.body.contains(iframe)) {
-      document.body.removeChild(iframe)
-    }
+    if (document.body.contains(iframe)) document.body.removeChild(iframe)
   }
   win.addEventListener('afterprint', cleanup)
   setTimeout(cleanup, 30000)

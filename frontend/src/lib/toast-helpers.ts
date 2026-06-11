@@ -65,7 +65,7 @@ export const toastHelpers = {
   paymentProcessed: (amount?: number) => {
     return toastHelpers.success(
       "Payment Processed",
-      amount ? `Payment of $${amount.toFixed(2)} processed successfully.` : "Payment processed successfully."
+      amount ? `Payment of Rs. ${amount.toFixed(2)} processed successfully.` : "Payment processed successfully."
     )
   },
 

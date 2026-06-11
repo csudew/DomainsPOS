@@ -51,7 +51,7 @@ export function AdminDashboard() {
   const recentOrders: Order[] = Array.isArray(recentOrdersRes) ? recentOrdersRes : []
 
   const fmt = (n: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+    new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(n)
 
   const statusBadge: Record<string, { label: string; className: string }> = {
     pending:   { label: 'New',       className: 'bg-yellow-100 text-yellow-800' },

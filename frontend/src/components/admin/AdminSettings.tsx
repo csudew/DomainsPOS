@@ -38,7 +38,7 @@ export function AdminSettings() {
     // Reset to defaults
     setSettings({
       restaurant_name: 'Dominos Restaurant',
-      currency: 'USD',
+      currency: 'LKR',
       tax_rate: '10.00',
       service_charge: '5.00',
       receipt_header: 'Thank you for dining with us!',
@@ -127,6 +127,7 @@ export function AdminSettings() {
                 value={settings.currency}
                 onChange={(e) => setSettings({...settings, currency: e.target.value})}
               >
+                <option value="LKR">LKR (Rs.)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
                 <option value="GBP">GBP (£)</option>

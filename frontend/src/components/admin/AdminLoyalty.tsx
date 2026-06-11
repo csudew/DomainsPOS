@@ -118,7 +118,7 @@ export function AdminLoyalty() {
     }
   }
 
-  const formatCurrency = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+  const formatCurrency = (n: number) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(n)
 
   return (
     <div className="space-y-6">

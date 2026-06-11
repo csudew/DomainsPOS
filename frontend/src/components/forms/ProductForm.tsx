@@ -182,7 +182,7 @@ export function ProductForm({ product, onSuccess, onCancel, mode = 'create' }: P
                 control={form.control}
                 name="price"
                 label="Price"
-                currency="$"
+                currency="Rs."
                 description="Product selling price"
               />
               

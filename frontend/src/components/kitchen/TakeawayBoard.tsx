@@ -220,7 +220,7 @@ function TakeawayOrderCard({ order, onComplete }: TakeawayOrderCardProps) {
         {/* Total Amount */}
         <div className="flex justify-between items-center mb-3 text-sm">
           <span className="text-muted-foreground">Total:</span>
-          <span className="font-semibold">${order.total_amount.toFixed(2)}</span>
+          <span className="font-semibold">Rs. {order.total_amount.toFixed(2)}</span>
         </div>
 
         {/* Action Buttons */}

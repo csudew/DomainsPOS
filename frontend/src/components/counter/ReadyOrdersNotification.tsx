@@ -226,7 +226,7 @@ function ReadyOrderCard({ order, onServed }: ReadyOrderCardProps) {
         {/* Order Summary */}
         <div className="mb-3">
           <div className="text-sm text-muted-foreground mb-1">
-            {order.items?.length || 0} items • ${order.total_amount.toFixed(2)}
+            {order.items?.length || 0} items • Rs. {order.total_amount.toFixed(2)}
           </div>
           
           {/* Item Preview */}
