@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { printReceipt } from '@/utils/printReceipt'
-import type { Order, LoyaltyCustomer } from '@/types'
+import { printerConnected, connectPrinter, disconnectPrinter } from '@/utils/thermalPrinter'
+import type { Order, LoyaltyCustomer, Product } from '@/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,8 +26,6 @@ import {
   Smartphone,
   Printer,
 } from 'lucide-react'
-import type { Product, Order } from '@/types'
-
 interface CartItem {
   product: Product
   quantity: number
@@ -46,7 +45,18 @@ export function CounterInterface() {
   const [lastPrintedOrder, setLastPrintedOrder] = useState<{ order: Order; pm: string } | null>(null)
 
   const [loyaltyPhone, setLoyaltyPhone] = useState('')
+  const [isPrinterConnected, setIsPrinterConnected] = useState(() => printerConnected())
   const prevReadyCountRef = useRef(0)
+
+  const handleConnectPrinter = async () => {
+    if (isPrinterConnected) {
+      await disconnectPrinter()
+      setIsPrinterConnected(false)
+    } else {
+      const ok = await connectPrinter()
+      setIsPrinterConnected(ok)
+    }
+  }
   const queryClient = useQueryClient()
 
   const { data: categories = [] } = useQuery({
@@ -408,6 +418,22 @@ export function CounterInterface() {
       {/* Right Panel — Order Summary + Payment */}
       <div className="w-1/3 flex flex-col bg-card">
         <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Order Summary</h3>
+            <button
+              onClick={handleConnectPrinter}
+              title={isPrinterConnected ? 'Printer connected — click to disconnect' : 'Click to connect thermal printer'}
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                isPrinterConnected
+                  ? 'border-green-400 text-green-700 bg-green-50 hover:bg-green-100'
+                  : 'border-border text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <Printer className="w-3.5 h-3.5" />
+              {isPrinterConnected ? 'Printer On' : 'Connect Printer'}
+              <span className={`w-1.5 h-1.5 rounded-full ${isPrinterConnected ? 'bg-green-500' : 'bg-gray-400'}`} />
+            </button>
+          </div>
           <h3 className="font-semibold mb-2">Customer Phone</h3>
           <Input
             type="tel"
