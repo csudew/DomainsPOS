@@ -120,20 +120,25 @@ function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
           <Card className="shadow-xl border-0">
-            <CardHeader className="text-center pb-8">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                <Store className="w-8 h-8 text-white" />
+            <CardHeader className="text-center pb-5 sm:pb-8">
+              {/* Mobile-only brand bar (left panel is hidden on mobile) */}
+              <div className="lg:hidden flex items-center justify-center gap-2 text-xs text-muted-foreground mb-3">
+                <Store className="w-3.5 h-3.5" />
+                Point of Sale System
               </div>
-              <CardTitle className="text-2xl font-bold">Dominos Restaurant</CardTitle>
-              <CardDescription className="text-base">
-                🍽️ Choose your role below or sign in manually
+              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg">
+                <Store className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+              </div>
+              <CardTitle className="text-xl sm:text-2xl font-bold">Dominos Restaurant</CardTitle>
+              <CardDescription className="text-sm sm:text-base">
+                Sign in to continue
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Username</label>
@@ -196,94 +201,74 @@ function LoginPage() {
                 </Button>
               </form>
 
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-700">Quick Access Demo Accounts</h3>
-                  <div className="text-xs text-gray-500">Click to login instantly</div>
-                </div>
-                
-                {/* Featured Roles - Server & Cashier */}
-                <div className="mb-4">
-                  <div className="text-xs text-gray-600 mb-2 font-medium">🌟 Featured Roles</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { 
-                        username: 'server1', 
-                        role: 'Server', 
-                        icon: UserCheck,
-                        bg: 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-800 border-purple-200', 
-                        desc: '🍽️ Table service & dine-in orders', 
-                        password: 'admin123',
-                        features: ['Table management', 'Order taking', 'Guest service']
-                      },
-                      { 
-                        username: 'counter1', 
-                        role: 'Counter', 
-                        icon: CreditCard,
-                        bg: 'bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-200', 
-                        desc: '💰 Payment processing & all orders', 
-                        password: 'admin123',
-                        features: ['All order types', 'Payment processing', 'Receipt printing']
-                      },
-                    ].map((account) => (
-                      <button
-                        key={account.username}
-                        onClick={() => fillDemoCredentials(account.username, account.password)}
-                        className={`p-4 rounded-xl border-2 ${account.bg} hover:scale-105 text-left transition-all duration-200 shadow-sm hover:shadow-md`}
-                        disabled={loginMutation.isPending}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-white/70 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <account.icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="font-semibold text-sm">{account.role}</div>
-                              <div className="text-xs opacity-60 font-mono">{account.password}</div>
-                            </div>
-                            <div className="text-xs mb-2 opacity-80">{account.desc}</div>
-                            <div className="flex flex-wrap gap-1">
-                              {account.features.map((feature, idx) => (
-                                <span key={idx} className="text-[10px] bg-white/50 px-2 py-0.5 rounded-full">
-                                  {feature}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+              <div className="border-t pt-5">
+                <p className="text-xs text-center text-gray-500 mb-3 font-medium">Quick-login demo accounts</p>
+
+                {/* Featured Roles */}
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3">
+                  {[
+                    {
+                      username: 'counter1',
+                      role: 'Counter',
+                      icon: CreditCard,
+                      bg: 'bg-gradient-to-br from-green-100 to-green-50 text-green-800 border-green-200',
+                      desc: 'Payment & orders',
+                      password: 'admin123',
+                    },
+                    {
+                      username: 'kitchen1',
+                      role: 'Kitchen',
+                      icon: ChefHat,
+                      bg: 'bg-gradient-to-br from-orange-100 to-orange-50 text-orange-800 border-orange-200',
+                      desc: 'Order prep',
+                      password: 'admin123',
+                    },
+                  ].map((account) => (
+                    <button
+                      key={account.username}
+                      onClick={() => fillDemoCredentials(account.username, account.password)}
+                      className={`p-3 rounded-xl border-2 ${account.bg} active:scale-95 sm:hover:scale-105 text-left transition-all duration-200 shadow-sm`}
+                      disabled={loginMutation.isPending}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-white/70 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <account.icon className="w-4 h-4" />
                         </div>
-                      </button>
-                    ))}
-                  </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm leading-tight">{account.role}</div>
+                          <div className="text-xs opacity-70 truncate">{account.desc}</div>
+                          <div className="text-[10px] opacity-50 font-mono">{account.password}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
 
                 {/* Other Roles */}
-                <div>
-                  <div className="text-xs text-gray-600 mb-2 font-medium">Other Demo Accounts</div>
-                  <div className="grid gap-2">
-                    {[
-                      { username: 'admin', role: 'Admin', icon: Settings, bg: 'bg-red-50 text-red-700 border-red-100', desc: '👑 Full system access', password: 'admin123' },
-                      { username: 'manager1', role: 'Manager', icon: BarChart3, bg: 'bg-blue-50 text-blue-700 border-blue-100', desc: '📊 Management & reports', password: 'admin123' },
-                      { username: 'kitchen1', role: 'Kitchen', icon: ChefHat, bg: 'bg-orange-50 text-orange-700 border-orange-100', desc: '👨‍🍳 Order preparation', password: 'admin123' },
-                    ].map((account) => (
-                      <button
-                        key={account.username}
-                        onClick={() => fillDemoCredentials(account.username, account.password)}
-                        className={`flex items-center justify-between p-3 border rounded-lg ${account.bg} hover:bg-opacity-80 text-left transition-all duration-200`}
-                        disabled={loginMutation.isPending}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 bg-white/70 rounded flex items-center justify-center">
-                            <account.icon className="w-3 h-3" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">{account.role}</div>
-                            <div className="text-xs opacity-70">{account.desc}</div>
-                          </div>
+                <div className="grid gap-1.5">
+                  {[
+                    { username: 'admin',    role: 'Admin',   icon: Settings,  bg: 'bg-red-50 text-red-700 border-red-100',    desc: 'Full system access',   password: 'admin123' },
+                    { username: 'manager1', role: 'Manager', icon: BarChart3,  bg: 'bg-blue-50 text-blue-700 border-blue-100',  desc: 'Management & reports', password: 'admin123' },
+                    { username: 'server1',  role: 'Server',  icon: UserCheck,  bg: 'bg-purple-50 text-purple-700 border-purple-100', desc: 'Table service',   password: 'admin123' },
+                  ].map((account) => (
+                    <button
+                      key={account.username}
+                      onClick={() => fillDemoCredentials(account.username, account.password)}
+                      className={`flex items-center justify-between p-2.5 border rounded-lg ${account.bg} active:opacity-70 text-left transition-all duration-150`}
+                      disabled={loginMutation.isPending}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 bg-white/70 rounded flex items-center justify-center flex-shrink-0">
+                          <account.icon className="w-3 h-3" />
                         </div>
-                        <div className="text-xs opacity-60 font-mono">{account.password}</div>
-                      </button>
-                    ))}
-                  </div>
+                        <div>
+                          <div className="font-medium text-sm">{account.role}</div>
+                          <div className="text-xs opacity-70">{account.desc}</div>
+                        </div>
+                      </div>
+                      <div className="text-[10px] opacity-50 font-mono shrink-0 ml-2">{account.password}</div>
+                    </button>
+                  ))}
                 </div>
               </div>
             </CardContent>

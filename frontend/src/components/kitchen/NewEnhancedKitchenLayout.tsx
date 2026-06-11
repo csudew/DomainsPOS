@@ -218,156 +218,116 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
     const progress = totalItems > 0 ? ((readyItems + completedItems) / totalItems) * 100 : 0;
 
     return (
-      <Card className={cn("w-full max-w-lg mx-auto min-h-[500px]", getUrgencyColor())}>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-2xl font-bold">
+      <Card className={cn("w-full", getUrgencyColor())}>
+        <CardHeader className="pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <div className="flex items-center justify-between mb-1.5">
+            <CardTitle className="text-xl sm:text-2xl font-bold">
               #{order.order_number}
             </CardTitle>
             <Badge
               variant={order.status === 'preparing' ? 'default' : 'destructive'}
-              className="text-sm px-3 py-1"
+              className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1"
             >
               {order.status === 'preparing' ? 'COOKING' : 'NEW'}
             </Badge>
           </div>
-          
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-            <span className="font-medium">
-              {order.order_type.replace('_', ' ').toUpperCase()} • {order.customer_name || 'Guest'}
+
+          <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground mb-2">
+            <span className="font-medium truncate">
+              {order.order_type.replace('_', ' ').toUpperCase()} · {order.customer_name || 'Guest'}
             </span>
-            <span className="font-medium">
-              {waitTime}m ago
-            </span>
+            <span className="font-medium shrink-0 ml-2">{waitTime}m</span>
           </div>
-          
-          {order.table && (
-            <div className="text-sm text-muted-foreground mb-3">
-              📍 Table {order.table.table_number}
-            </div>
-          )}
-          
+
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3 mt-3">
-            <div 
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="text-sm text-muted-foreground mt-2 font-medium">
-            {readyItems} ready • {completedItems} completed • {totalItems - readyItems - completedItems} cooking ({Math.round(progress)}% complete)
+          <div className="text-xs text-muted-foreground mt-1">
+            {readyItems + completedItems}/{totalItems} done
           </div>
         </CardHeader>
-        
-        <CardContent className="space-y-4">
+
+        <CardContent className="space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
           {/* Order Items with Checkboxes */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-gray-900 flex items-center">
-              <Package className="w-4 h-4 mr-2" />
-              Food Items:
-            </h4>
-            
+          <div className="space-y-2">
             {displayItems.map((item, index) => {
               const isServed = item.status === 'completed';
               const isReady = checkedItems.has(item.id);
-              
+
               return (
                 <div key={item.id} className={cn(
-                  "flex items-start space-x-4 p-4 rounded-lg border-2 transition-colors",
-                  isServed ? "bg-gray-50 border-gray-300 opacity-75" : "bg-white hover:border-blue-200"
+                  "flex items-center gap-3 p-2.5 sm:p-3 rounded-lg border-2 transition-colors",
+                  isServed ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-gray-100 active:border-green-200"
                 )}>
                   <button
                     onClick={() => !isServed && toggleItem(item.id)}
                     disabled={isServed}
                     className={cn(
-                      "w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all mt-1 flex-shrink-0",
-                      isServed 
-                        ? "bg-gray-400 border-gray-400 text-white cursor-not-allowed"
+                      "w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0",
+                      isServed
+                        ? "bg-gray-300 border-gray-300 text-white cursor-not-allowed"
                         : isReady
-                          ? "bg-green-500 border-green-500 text-white shadow-lg"
-                          : "border-gray-300 hover:border-green-400 hover:bg-green-50"
+                          ? "bg-green-500 border-green-500 text-white"
+                          : "border-gray-300 active:bg-green-50"
                     )}
                   >
-                    {(isReady || isServed) && <CheckCircle className="w-5 h-5" />}
+                    {(isReady || isServed) && <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </button>
-                
-                <div className="flex-1 min-w-0">
-                  <div className={cn(
-                    "font-semibold text-lg mb-2",
-                    isServed ? "line-through text-gray-500" : isReady && "line-through text-muted-foreground"
-                  )}>
-                    {item.quantity}x {item.product?.name || `Item ${index + 1}`}
-                    {isServed && <span className="ml-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">COMPLETED</span>}
-                  </div>
-                  
-                  {item.special_instructions && (
-                    <div className="text-sm bg-yellow-50 border border-yellow-200 rounded p-2 text-yellow-800">
-                      <strong>Special:</strong> {item.special_instructions}
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between mt-2">
+
+                  <div className="flex-1 min-w-0">
                     <div className={cn(
-                      "text-xs font-medium px-2 py-1 rounded-full",
-                      isServed 
-                        ? "bg-gray-100 text-gray-600"
-                        : isReady 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-orange-100 text-orange-800"
+                      "font-semibold text-sm sm:text-base leading-tight",
+                      (isServed || isReady) && "line-through text-muted-foreground"
                     )}>
-                      {isServed ? '✅ Completed' : isReady ? '✅ Ready' : '🍳 Cooking'}
+                      {item.quantity}× {item.product?.name || `Item ${index + 1}`}
                     </div>
-                    
-                    {/* Individual Item Serve Button */}
-                    {isReady && !isServed && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-300"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleItemServe(order.id, item.id, item.product?.name || 'Item');
-                        }}
-                      >
-                        🍽️ Serve Now
-                      </Button>
+                    {item.special_instructions && (
+                      <div className="text-xs mt-0.5 text-yellow-700 bg-yellow-50 rounded px-1.5 py-0.5 inline-block">
+                        {item.special_instructions}
+                      </div>
                     )}
                   </div>
+
+                  <div className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full shrink-0",
+                    isServed ? "bg-gray-100 text-gray-500" : isReady ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                  )}>
+                    {isServed ? 'Done' : isReady ? 'Ready' : 'Cooking'}
+                  </div>
                 </div>
-              </div>
               );
             })}
           </div>
           
           {/* Order Notes */}
           {order.notes && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <h5 className="font-semibold text-blue-900 mb-1">Order Notes:</h5>
-              <p className="text-blue-800 text-sm">{order.notes}</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+              <p className="text-blue-800 text-xs"><strong>Note:</strong> {order.notes}</p>
             </div>
           )}
-          
+
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2 pt-1">
             {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'ready') && (
               <Button
                 onClick={() => handleOrderStatusUpdate(order.id, 'preparing')}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 text-lg"
-                size="lg"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 sm:h-12 text-sm sm:text-base"
               >
-                <ChefHat className="w-5 h-5 mr-2" />
+                <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
                 Start Cooking
               </Button>
             )}
-
             {order.status === 'preparing' && (
               <Button
                 onClick={() => handleOrderStatusUpdate(order.id, 'ready')}
-                className="flex-1 bg-green-600 hover:bg-green-700 h-12 text-lg"
-                size="lg"
+                className="flex-1 bg-green-600 hover:bg-green-700 h-11 sm:h-12 text-sm sm:text-base"
               >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Complete
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
+                Mark Ready
               </Button>
             )}
           </div>
@@ -393,31 +353,31 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
     }
 
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {takeawayOrders.map((order) => {
           const waitTime = Math.floor((new Date().getTime() - new Date(order.updated_at).getTime()) / 1000 / 60);
-          
+
           return (
-            <Card key={order.id} className="border-green-500 bg-green-50">
-              <CardHeader className="text-center pb-2">
-                <CardTitle className="text-2xl font-bold text-green-800">
-                  #{order.order_number}
-                </CardTitle>
-                <div className="text-lg font-semibold">{order.customer_name || 'Guest'}</div>
-                <Badge variant="outline" className="text-green-700 border-green-700">
-                  Ready for pickup
-                </Badge>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="text-sm text-muted-foreground">
-                  Ready for {waitTime} minutes
+            <Card key={order.id} className="border-2 border-green-500 bg-green-50">
+              <CardContent className="p-4 flex items-center gap-4">
+                {/* Order number — large and prominent */}
+                <div className="text-center shrink-0">
+                  <div className="text-3xl sm:text-4xl font-black text-green-800 leading-none">
+                    #{order.order_number}
+                  </div>
+                  <div className="text-xs text-green-600 mt-0.5">{waitTime}m waiting</div>
                 </div>
-                <div className="mt-2">
-                  {order.items?.map((item) => (
-                    <div key={item.id} className="text-sm">
-                      {item.quantity}x {item.product?.name}
-                    </div>
-                  ))}
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-green-900 truncate">
+                    {order.customer_phone || order.customer_name || 'Guest'}
+                  </div>
+                  <div className="text-sm text-green-700 mt-0.5">
+                    {order.items?.map(i => `${i.quantity}× ${i.product?.name}`).join(', ')}
+                  </div>
+                  <Badge variant="outline" className="text-xs text-green-700 border-green-400 mt-1.5">
+                    Ready for pickup
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
@@ -429,7 +389,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
 
   // Sound Settings Panel
   const SoundSettingsPanel = () => (
-    <Card className="w-80">
+    <Card className="w-full max-w-xs sm:w-80">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Volume2 className="w-5 h-5" />
@@ -521,117 +481,88 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3">
+        {/* Row 1: logo + title + action buttons */}
         <div className="flex items-center justify-between">
-          {/* Left side - Title and stats */}
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mr-4">
-                <ChefHat className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Kitchen Display</h1>
-                <p className="text-sm text-gray-500">
-                  Chef {user.first_name} • {stats.total} active orders
-                </p>
-              </div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 bg-orange-600 rounded-lg flex items-center justify-center shrink-0">
+              <ChefHat className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
             </div>
-
-            {/* Status badges */}
-            <div className="flex items-center space-x-3">
-              <Badge variant="destructive" className="text-sm">
-                {stats.total - stats.preparing} New
-              </Badge>
-              <Badge variant="default" className="text-sm">
-                {stats.preparing} Cooking
-              </Badge>
-              {stats.urgent > 0 && (
-                <Badge variant="destructive" className="text-sm animate-pulse">
-                  {stats.urgent} Urgent
-                </Badge>
-              )}
+            <div>
+              <h1 className="text-base sm:text-2xl font-bold text-gray-900 leading-tight">Kitchen Display</h1>
+              <p className="text-xs text-gray-500">{user.first_name} · {stats.total} active</p>
             </div>
           </div>
 
-          {/* Right side - Controls */}
-          <div className="flex items-center space-x-4">
-            {/* Auto-refresh indicator */}
-            <div className="flex items-center space-x-2">
-              <div className={cn(
-                "w-2 h-2 rounded-full",
-                autoRefresh ? "bg-green-500 animate-pulse" : "bg-gray-300"
-              )} />
-              <span className="text-sm text-gray-600">
-                {autoRefresh ? 'Live updates' : 'Manual refresh'}
-              </span>
+          {/* Controls — always visible, compact on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Live indicator — text hidden on mobile */}
+            <div className="hidden sm:flex items-center gap-1.5 mr-1">
+              <div className={cn("w-2 h-2 rounded-full", autoRefresh ? "bg-green-500 animate-pulse" : "bg-gray-300")} />
+              <span className="text-xs text-gray-500">{autoRefresh ? 'Live' : 'Paused'}</span>
             </div>
-
-            {/* Controls */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-8 w-8 p-0">
+              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
             </Button>
-
-            <Button
-              variant={autoRefresh ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-            >
-              <Clock className="w-4 h-4" />
+            <Button variant={autoRefresh ? "default" : "outline"} size="sm" onClick={() => setAutoRefresh(!autoRefresh)} className="h-8 w-8 p-0">
+              <Clock className="w-3.5 h-3.5" />
             </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSoundSettings(!showSoundSettings)}
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            <Button variant="outline" size="sm" onClick={() => setShowSoundSettings(!showSoundSettings)} className="h-8 w-8 p-0">
+              {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-700"
-            >
-              <LogOut className="w-4 h-4" />
+            <Button variant="outline" size="sm" onClick={handleLogout} className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+              <LogOut className="w-3.5 h-3.5" />
             </Button>
           </div>
+        </div>
+
+        {/* Row 2: status badges (scrollable on mobile) */}
+        <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-0.5 scrollbar-none">
+          <Badge variant="destructive" className="text-xs shrink-0">
+            {stats.total - stats.preparing} New
+          </Badge>
+          <Badge variant="default" className="text-xs shrink-0">
+            {stats.preparing} Cooking
+          </Badge>
+          <Badge variant="outline" className="text-xs shrink-0 text-green-700 border-green-300">
+            {stats.ready} Ready
+          </Badge>
+          {stats.urgent > 0 && (
+            <Badge variant="destructive" className="text-xs shrink-0 animate-pulse">
+              {stats.urgent} Urgent!
+            </Badge>
+          )}
         </div>
       </div>
 
       {/* Sound Settings Overlay */}
       {showSoundSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="relative">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="relative w-full max-w-xs sm:w-80">
             <SoundSettingsPanel />
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowSoundSettings(false)}
-              className="absolute -top-2 -right-2"
+              className="absolute -top-2 -right-2 w-7 h-7 p-0 rounded-full"
             >
-              ×
+              <X className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="active-orders" className="text-lg py-3">
-              <ChefHat className="w-5 h-5 mr-2" />
-              Active Orders ({stats.total})
+          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
+            <TabsTrigger value="active-orders" className="text-sm sm:text-lg py-2.5 sm:py-3">
+              <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+              <span className="hidden xs:inline">Active Orders </span>({stats.total})
             </TabsTrigger>
-            <TabsTrigger value="takeaway-ready" className="text-lg py-3">
-              <Package className="w-5 h-5 mr-2" />
-              Takeaway Ready ({kitchenRelevantOrders.filter(o => o.order_type === 'takeout' && o.status === 'ready').length})
+            <TabsTrigger value="takeaway-ready" className="text-sm sm:text-lg py-2.5 sm:py-3">
+              <Package className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+              <span className="hidden xs:inline">Takeaway Ready </span>({kitchenRelevantOrders.filter(o => o.order_type === 'takeout' && o.status === 'ready').length})
             </TabsTrigger>
           </TabsList>
 
@@ -662,7 +593,7 @@ export function NewEnhancedKitchenLayout({ user }: NewEnhancedKitchenLayoutProps
                 </div>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {kitchenRelevantOrders
                   .filter((order: Order) => order.status !== 'completed')
                   .map((order: Order) => (
